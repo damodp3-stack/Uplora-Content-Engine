@@ -19,6 +19,7 @@ import { WorkspaceModule } from "./modules/workspace/workspace.module";
 import { TemplatesModule } from "./modules/templates/templates.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { RealtimeModule } from "./modules/realtime/realtime.module";
+import { VideoStudioModule } from "./modules/video-studio/video-studio.module";
 
 // Config
 import databaseConfig from "./config/database.config";
@@ -86,6 +87,7 @@ import storageConfig from "./config/storage.config";
     TemplatesModule,
     NotificationsModule,
     RealtimeModule,
+    VideoStudioModule,
   ],
 })
 export class AppModule {}
