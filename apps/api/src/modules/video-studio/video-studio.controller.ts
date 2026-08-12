@@ -7,14 +7,15 @@ import {
   Query,
   UseGuards,
   NotFoundException,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { InjectQueue } from '@nestjs/bull';
-import { VideoProject, VideoStage } from './entities/video-project.entity';
-import { VideoShot } from './entities/video-shot.entity';
+} from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { InjectQueue } from "@nestjs/bull";
+import { VideoProject, VideoStage } from "./entities/video-project.entity";
+import { VideoShot } from "./entities/video-shot.entity";
+import { VideoProductionOrchestrator } from "./video-production.orchestrator";
 
 export interface CreateVideoProjectDto {
   title: string;
@@ -26,56 +27,57 @@ export interface CreateVideoProjectDto {
   subtitleLanguage?: string;
 }
 
-@ApiTags('Video Studio')
+@ApiTags("Video Studio")
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('video-studio')
+@Controller("video-studio")
 export class VideoStudioController {
   constructor(
     @InjectRepository(VideoProject)
     private readonly projectRepo: Repository<VideoProject>,
     @InjectRepository(VideoShot)
     private readonly shotRepo: Repository<VideoShot>,
-    @InjectQueue('video-production')
+    @InjectQueue("video-production")
     private readonly productionQueue: any,
+    private readonly orchestrator: VideoProductionOrchestrator,
   ) {}
 
-  @Post('create')
-  @ApiOperation({ summary: 'Initiate autonomous AI video production job' })
+  @Post("create")
+  @ApiOperation({ summary: "Initiate autonomous AI video production job" })
   async createProject(@Body() dto: CreateVideoProjectDto) {
     const project = this.projectRepo.create({
-      workspaceId: 'ws-default',
-      authorId: 'user-default',
-      title: dto.title || 'Untitled AI Reel',
+      workspaceId: "ws-default",
+      authorId: "user-default",
+      title: dto.title || "Untitled AI Reel",
       rawPrompt: dto.rawPrompt,
-      targetPlatform: dto.targetPlatform || 'instagram_reels',
+      targetPlatform: dto.targetPlatform || "instagram_reels",
       targetDurationSec: dto.targetDurationSec || 30,
-      scriptLanguage: dto.scriptLanguage || 'english',
-      voiceLanguage: dto.voiceLanguage || 'english',
-      subtitleLanguage: dto.subtitleLanguage || 'english',
+      scriptLanguage: dto.scriptLanguage || "english",
+      voiceLanguage: dto.voiceLanguage || "english",
+      subtitleLanguage: dto.subtitleLanguage || "english",
       currentStage: VideoStage.IDEA_ANALYSIS,
       stageProgressPercent: 0,
       overallProgressPercent: 0,
     });
 
     const saved = await this.projectRepo.save(project);
-
-    // Enqueue background processing job
-    await this.productionQueue.add('start', { projectId: saved.id });
+    await this.productionQueue.add("start", { projectId: saved.id });
 
     return {
       success: true,
-      message: 'Video production job queued successfully',
+      message: "Video production job queued successfully",
       data: saved,
     };
   }
 
-  @Get('projects/:id')
-  @ApiOperation({ summary: 'Get video project state and real-time stage progress' })
-  async getProject(@Param('id') id: string) {
+  @Get("projects/:id")
+  @ApiOperation({
+    summary: "Get video project state and real-time stage progress",
+  })
+  async getProject(@Param("id") id: string) {
     const project = await this.projectRepo.findOne({
       where: { id },
-      relations: ['shots'],
+      relations: ["shots"],
     });
 
     if (!project) {
@@ -88,28 +90,44 @@ export class VideoStudioController {
     };
   }
 
-  @Post('projects/:id/resume')
-  @ApiOperation({ summary: 'Resume interrupted or failed video project pipeline' })
-  async resumeProject(@Param('id') id: string) {
+  @Post("projects/:id/resume")
+  @ApiOperation({
+    summary: "Resume interrupted or failed video project pipeline",
+  })
+  async resumeProject(@Param("id") id: string) {
     const project = await this.projectRepo.findOne({ where: { id } });
     if (!project) {
       throw new NotFoundException(`Video project ${id} not found`);
     }
 
-    await this.productionQueue.add('resume', { projectId: id });
+    await this.productionQueue.add("resume", { projectId: id });
 
     return {
       success: true,
-      message: 'Video production resume job queued',
+      message: "Video production resume job queued",
     };
   }
 
-  @Get('projects')
-  @ApiOperation({ summary: 'List workspace video projects' })
-  async listProjects(@Query('workspaceId') workspaceId: string = 'ws-default') {
+  @Post("projects/:id/regenerate-stage")
+  @ApiOperation({ summary: "Regenerate specific production stage" })
+  async regenerateStage(
+    @Param("id") id: string,
+    @Body("stage") stage: VideoStage,
+  ) {
+    const updated = await this.orchestrator.regenerateStage(id, stage);
+    return {
+      success: true,
+      message: `Stage ${stage} regenerated successfully`,
+      data: updated,
+    };
+  }
+
+  @Get("projects")
+  @ApiOperation({ summary: "List workspace video projects" })
+  async listProjects(@Query("workspaceId") workspaceId: string = "ws-default") {
     const projects = await this.projectRepo.find({
       where: { workspaceId },
-      order: { createdAt: 'DESC' },
+      order: { createdAt: "DESC" },
       take: 20,
     });
 

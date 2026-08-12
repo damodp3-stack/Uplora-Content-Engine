@@ -9,6 +9,14 @@ import {
 import { VideoShot } from "./entities/video-shot.entity";
 import { CollaborationGateway } from "../realtime/collaboration.gateway";
 
+// Creative Agents
+import { CreativeDirectorAgent } from "./agents/creative-director.agent";
+import { ContentStrategistAgent } from "./agents/content-strategist.agent";
+import { ScriptWriterAgent } from "./agents/script-writer.agent";
+import { StoryboardDirectorAgent } from "./agents/storyboard-director.agent";
+import { VisualDirectorAgent } from "./agents/visual-director.agent";
+import { CharacterAssetAgent } from "./agents/character-asset.agent";
+
 const STAGE_WEIGHTS: Record<VideoStage, number> = {
   [VideoStage.IDEA_ANALYSIS]: 5,
   [VideoStage.SCRIPTING]: 15,
@@ -34,11 +42,18 @@ export class VideoProductionOrchestrator {
     @InjectRepository(VideoShot)
     private readonly shotRepo: Repository<VideoShot>,
     private readonly collaborationGateway: CollaborationGateway,
+
+    private readonly creativeDirector: CreativeDirectorAgent,
+    private readonly contentStrategist: ContentStrategistAgent,
+    private readonly scriptWriter: ScriptWriterAgent,
+    private readonly storyboardDirector: StoryboardDirectorAgent,
+    private readonly visualDirector: VisualDirectorAgent,
+    private readonly characterAsset: CharacterAssetAgent,
   ) {}
 
   async startProduction(projectId: string): Promise<void> {
     this.logger.log(
-      `🎬 Initiating production pipeline for project: ${projectId}`,
+      `🎬 Initiating Phase 2 Creative Production for project: ${projectId}`,
     );
     const project = await this.projectRepo.findOne({
       where: { id: projectId },
@@ -50,7 +65,7 @@ export class VideoProductionOrchestrator {
 
   async resumeProduction(projectId: string): Promise<void> {
     this.logger.log(
-      `🔄 Resuming production pipeline for project: ${projectId}`,
+      `🔄 Resuming Phase 2 Creative Production for project: ${projectId}`,
     );
     const project = await this.projectRepo.findOne({
       where: { id: projectId },
@@ -61,120 +76,52 @@ export class VideoProductionOrchestrator {
     await this.executePipeline(project);
   }
 
+  async regenerateStage(
+    projectId: string,
+    stage: VideoStage,
+  ): Promise<VideoProject> {
+    this.logger.log(
+      `🔄 Regenerating stage [${stage}] for project: ${projectId}`,
+    );
+    const project = await this.projectRepo.findOne({
+      where: { id: projectId },
+      relations: ["shots"],
+    });
+    if (!project) throw new Error(`Project ${projectId} not found`);
+
+    if (stage === VideoStage.IDEA_ANALYSIS) {
+      await this.runIdeaAnalysis(project);
+    } else if (stage === VideoStage.SCRIPTING) {
+      await this.runScripting(project);
+    } else if (stage === VideoStage.STORYBOARDING) {
+      await this.runStoryboarding(project);
+    } else if (stage === VideoStage.VISUAL_DESIGN) {
+      await this.runVisualDesign(project);
+    }
+
+    return project;
+  }
+
   private async executePipeline(project: VideoProject): Promise<void> {
     try {
-      // Stage 1: Idea Analysis
-      await this.updateStage(project, VideoStage.IDEA_ANALYSIS, "running", 20);
-      project.concept = {
-        objective:
-          "Explain importance of professional websites for industrial firms",
-        targetAudience: "B2B Business Owners & Factory Directors",
-        format: "Instagram Reel (9:16)",
-        hookType: "Surprising Stat Hook",
-      };
-      await this.updateStage(
-        project,
-        VideoStage.IDEA_ANALYSIS,
-        "completed",
-        100,
-      );
+      // Stage 1: Idea Analysis -> CreativeConceptDTO
+      await this.runIdeaAnalysis(project);
 
-      // Stage 2: Scripting
-      await this.updateStage(project, VideoStage.SCRIPTING, "running", 30);
-      project.script = {
-        title: "Why Industrial Companies Need a Website in 2026",
-        narrationText:
-          "92% of industrial buyers research online before making a $100k vendor deal. If your company doesn't have a professional website, you're losing deals to competitors every single day. Uplora builds high-converting industrial websites built for growth.",
-        durationSec: project.targetDurationSec || 30,
-      };
-      await this.updateStage(project, VideoStage.SCRIPTING, "completed", 100);
+      // Stage 2: Scripting -> StrategyBlueprintDTO & ScriptDocumentDTO
+      await this.runScripting(project);
 
-      // Stage 3: Storyboarding
-      await this.updateStage(project, VideoStage.STORYBOARDING, "running", 40);
-      const shotsCount = Math.ceil((project.targetDurationSec || 30) / 4);
-      let existingShots = await this.shotRepo.find({
-        where: { projectId: project.id },
-      });
+      // Stage 3: Storyboarding -> StoryboardDTO & VideoShot Entities
+      await this.runStoryboarding(project);
 
-      if (existingShots.length === 0) {
-        const newShots: Partial<VideoShot>[] = [];
-        for (let i = 1; i <= shotsCount; i++) {
-          newShots.push({
-            projectId: project.id,
-            shotNumber: i,
-            durationSec: 4.0,
-            narration: `Scene ${i} narration text segment`,
-            visualDescription: `Industrial plant shot ${i} with modern lighting`,
-            cameraMovement: "Slow push in",
-            cameraAngle: "Eye level",
-            status: "pending",
-          });
-        }
-        await this.shotRepo.save(newShots);
-        existingShots = await this.shotRepo.find({
-          where: { projectId: project.id },
-        });
-      }
-      await this.updateStage(
-        project,
-        VideoStage.STORYBOARDING,
-        "completed",
-        100,
-      );
+      // Stage 4: Visual Design -> VisualBibleDTO & CharacterProfileDTO[]
+      await this.runVisualDesign(project);
 
-      // Stage 4: Visual Design
-      await this.updateStage(project, VideoStage.VISUAL_DESIGN, "running", 50);
-      project.visualBible = {
-        colorPalette: ["#0F172A", "#3B82F6", "#10B981"],
-        lightingStyle: "Cinematic Industrial Minimal",
-        characterSeed: 104258,
-      };
-      await this.updateStage(
-        project,
-        VideoStage.VISUAL_DESIGN,
-        "completed",
-        100,
-      );
-
-      // Stage 5: Shot Generation
-      await this.updateStage(
-        project,
-        VideoStage.SHOT_GENERATION,
-        "running",
-        10,
-      );
-      for (let i = 0; i < existingShots.length; i++) {
-        const shot = existingShots[i];
-        if (shot.status !== "completed") {
-          shot.status = "generating";
-          await this.shotRepo.save(shot);
-
-          // Simulate shot generation
-          shot.videoUrl = `https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4`;
-          shot.status = "completed";
-          await this.shotRepo.save(shot);
-        }
-        const shotProgress = Math.round(((i + 1) / existingShots.length) * 100);
-        await this.updateStage(
-          project,
-          VideoStage.SHOT_GENERATION,
-          "running",
-          shotProgress,
-        );
-      }
+      // Stage 5 to 10: Placeholder handlers for downstream Phase 3-5 execution
       await this.updateStage(
         project,
         VideoStage.SHOT_GENERATION,
         "completed",
         100,
-      );
-
-      // Stage 6: Voice Synthesis
-      await this.updateStage(
-        project,
-        VideoStage.VOICE_SYNTHESIS,
-        "running",
-        60,
       );
       await this.updateStage(
         project,
@@ -182,41 +129,18 @@ export class VideoProductionOrchestrator {
         "completed",
         100,
       );
-
-      // Stage 7: Audio Mixing
-      await this.updateStage(project, VideoStage.AUDIO_MIXING, "running", 70);
       await this.updateStage(
         project,
         VideoStage.AUDIO_MIXING,
         "completed",
         100,
       );
-
-      // Stage 8: Video Assembly
-      await this.updateStage(project, VideoStage.VIDEO_ASSEMBLY, "running", 80);
-      project.finalVideoUrl = `https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4`;
-      project.thumbnailUrl = `https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1080&q=80`;
       await this.updateStage(
         project,
         VideoStage.VIDEO_ASSEMBLY,
         "completed",
         100,
       );
-
-      // Stage 9: Quality Control
-      await this.updateStage(
-        project,
-        VideoStage.QUALITY_CONTROL,
-        "running",
-        90,
-      );
-      project.qcResult = {
-        overallScore: 92,
-        hookScore: 94,
-        pacingScore: 90,
-        continuityScore: 91,
-        approved: true,
-      };
       await this.updateStage(
         project,
         VideoStage.QUALITY_CONTROL,
@@ -224,7 +148,6 @@ export class VideoProductionOrchestrator {
         100,
       );
 
-      // Stage 10: Completion
       project.currentStage = VideoStage.COMPLETED;
       project.overallProgressPercent = 100;
       project.stageProgressPercent = 100;
@@ -232,14 +155,18 @@ export class VideoProductionOrchestrator {
 
       this.broadcastEvent(project.id, "production.completed", {
         projectId: project.id,
-        finalVideoUrl: project.finalVideoUrl,
-        qcResult: project.qcResult,
+        concept: project.concept,
+        script: project.script,
+        storyboard: project.storyboard,
+        visualBible: project.visualBible,
       });
 
-      this.logger.log(`✅ Production completed for project ${project.id}`);
+      this.logger.log(
+        `✅ Phase 2 Creative Intelligence completed for project ${project.id}`,
+      );
     } catch (error) {
       this.logger.error(
-        `❌ Production failed for project ${project.id}: ${(error as Error).message}`,
+        `❌ Creative pipeline failed for project ${project.id}: ${(error as Error).message}`,
       );
       project.currentStage = VideoStage.FAILED;
       project.errorMessage = (error as Error).message;
@@ -250,6 +177,77 @@ export class VideoProductionOrchestrator {
         error: (error as Error).message,
       });
     }
+  }
+
+  private async runIdeaAnalysis(project: VideoProject): Promise<void> {
+    await this.updateStage(project, VideoStage.IDEA_ANALYSIS, "running", 20);
+    const concept = await this.creativeDirector.developConcept(
+      project.rawPrompt,
+      project.targetPlatform,
+    );
+    project.concept = concept as any;
+    project.title = concept.title;
+    await this.updateStage(project, VideoStage.IDEA_ANALYSIS, "completed", 100);
+  }
+
+  private async runScripting(project: VideoProject): Promise<void> {
+    await this.updateStage(project, VideoStage.SCRIPTING, "running", 30);
+    const concept = project.concept as any;
+    const strategy = await this.contentStrategist.buildStrategy(
+      concept,
+      project.targetDurationSec,
+    );
+    const script = await this.scriptWriter.writeScript(concept, strategy, {
+      script: project.scriptLanguage || "english",
+      voice: project.voiceLanguage || "english",
+      subtitles: project.subtitleLanguage || "english",
+    });
+    project.script = { strategy, script } as any;
+    await this.updateStage(project, VideoStage.SCRIPTING, "completed", 100);
+  }
+
+  private async runStoryboarding(project: VideoProject): Promise<void> {
+    await this.updateStage(project, VideoStage.STORYBOARDING, "running", 40);
+    const script = project.script?.script;
+    const storyboard = await this.storyboardDirector.createStoryboard(script);
+    project.storyboard = storyboard as any;
+
+    // Synchronize DB VideoShot entities
+    let existingShots = await this.shotRepo.find({
+      where: { projectId: project.id },
+    });
+    if (existingShots.length > 0) {
+      await this.shotRepo.remove(existingShots);
+    }
+
+    const shotEntities = storyboard.shots.map((s) =>
+      this.shotRepo.create({
+        projectId: project.id,
+        shotNumber: s.shotNumber,
+        durationSec: s.durationSec,
+        narration: s.narrationText,
+        visualDescription: s.visualDescription,
+        cameraMovement: s.cameraMovement,
+        cameraAngle: s.cameraAngle,
+        generationPrompt: s.generationPrompt,
+        status: "pending",
+      }),
+    );
+    await this.shotRepo.save(shotEntities);
+
+    await this.updateStage(project, VideoStage.STORYBOARDING, "completed", 100);
+  }
+
+  private async runVisualDesign(project: VideoProject): Promise<void> {
+    await this.updateStage(project, VideoStage.VISUAL_DESIGN, "running", 50);
+    const concept = project.concept as any;
+    const visualBible = await this.visualDirector.createVisualBible(concept);
+    const characterProfiles = await this.characterAsset.generateProfiles(
+      concept,
+      visualBible,
+    );
+    project.visualBible = { visualBible, characterProfiles } as any;
+    await this.updateStage(project, VideoStage.VISUAL_DESIGN, "completed", 100);
   }
 
   private async updateStage(
@@ -285,7 +283,7 @@ export class VideoProductionOrchestrator {
         ?.to(`project:${projectId}`)
         .emit(event, payload);
     } catch (err) {
-      // Gateway may not be attached in unit test context
+      // Gateway context guard
     }
   }
 }
