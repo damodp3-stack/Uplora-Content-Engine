@@ -1,8 +1,17 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { Sparkles, Zap, Shield, Cpu, Share2, BarChart3, ArrowRight, Check } from 'lucide-react';
+import React from "react";
+import Link from "next/link";
+import {
+  Sparkles,
+  Zap,
+  Shield,
+  Cpu,
+  Share2,
+  BarChart3,
+  ArrowRight,
+  Check,
+} from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -13,11 +22,16 @@ export default function LandingPage() {
           <div className="w-10 h-10 rounded-xl bg-brand-gradient flex items-center justify-center shadow-glow">
             <Zap className="w-6 h-6 text-white" />
           </div>
-          <span className="font-extrabold text-xl tracking-wider text-white">UPLORA</span>
+          <span className="font-extrabold text-xl tracking-wider text-white">
+            UPLORA
+          </span>
         </div>
 
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-xs font-semibold text-gray-300 hover:text-white transition-colors">
+          <Link
+            href="/dashboard"
+            className="text-xs font-semibold text-gray-300 hover:text-white transition-colors"
+          >
             Sign In
           </Link>
           <Link
@@ -38,11 +52,16 @@ export default function LandingPage() {
         </div>
 
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
-          Supercharge Content Creation with <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent">Zero API Costs</span>
+          Supercharge Content Creation with{" "}
+          <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent">
+            Zero API Costs
+          </span>
         </h1>
 
         <p className="text-sm sm:text-base text-gray-400 max-w-2xl leading-relaxed">
-          The world’s first free, open-source content engine powered by NestJS, Next.js 14, local Ollama Llama3 AI models, real-time SEO scoring, visual drag & drop scheduling, and multi-channel publishing.
+          The world’s first free, open-source content engine powered by NestJS,
+          Next.js 14, local Ollama Llama3 AI models, real-time SEO scoring,
+          visual drag & drop scheduling, and multi-channel publishing.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-4 mt-4">
@@ -69,9 +88,12 @@ export default function LandingPage() {
             <div className="w-10 h-10 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center mb-4 border border-purple-500/20">
               <Cpu className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-base text-white">Free Local AI Models</h3>
+            <h3 className="font-bold text-base text-white">
+              Free Local AI Models
+            </h3>
             <p className="text-xs text-gray-400 mt-2 leading-relaxed">
-              Connect to local Ollama endpoints or HuggingFace models for unlimited generation with zero per-token subscription costs.
+              Connect to local Ollama endpoints or HuggingFace models for
+              unlimited generation with zero per-token subscription costs.
             </p>
           </div>
 
@@ -79,9 +101,12 @@ export default function LandingPage() {
             <div className="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center mb-4 border border-indigo-500/20">
               <Share2 className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-base text-white">Multi-Channel Publishing</h3>
+            <h3 className="font-bold text-base text-white">
+              Multi-Channel Publishing
+            </h3>
             <p className="text-xs text-gray-400 mt-2 leading-relaxed">
-              Repurpose longform articles into Twitter threads, LinkedIn stories, and Instagram captions with instant live previews.
+              Repurpose longform articles into Twitter threads, LinkedIn
+              stories, and Instagram captions with instant live previews.
             </p>
           </div>
 
@@ -89,9 +114,12 @@ export default function LandingPage() {
             <div className="w-10 h-10 rounded-xl bg-pink-600/20 text-pink-400 flex items-center justify-center mb-4 border border-pink-500/20">
               <BarChart3 className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-base text-white">Real-Time SEO Optimizer</h3>
+            <h3 className="font-bold text-base text-white">
+              Real-Time SEO Optimizer
+            </h3>
             <p className="text-xs text-gray-400 mt-2 leading-relaxed">
-              Analyze keyword density, readability scores, and heading hierarchy live as you write in the studio editor.
+              Analyze keyword density, readability scores, and heading hierarchy
+              live as you write in the studio editor.
             </p>
           </div>
         </div>

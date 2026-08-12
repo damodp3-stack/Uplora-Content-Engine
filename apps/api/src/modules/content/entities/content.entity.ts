@@ -1,46 +1,55 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  UpdateDateColumn, ManyToOne, OneToMany, ManyToMany,
-  JoinTable, Index, BeforeInsert, BeforeUpdate,
-} from 'typeorm';
-import { User } from '../../auth/entities/user.entity';
-import { ContentVersion } from './content-version.entity';
-import { ContentTag } from './content-tag.entity';
-import { Workspace } from '../../workspace/entities/workspace.entity';
-import slugify from 'slugify';
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  ManyToMany,
+  JoinTable,
+  Index,
+  BeforeInsert,
+  BeforeUpdate,
+} from "typeorm";
+import { User } from "../../auth/entities/user.entity";
+import { ContentVersion } from "./content-version.entity";
+import { ContentTag } from "./content-tag.entity";
+import { Workspace } from "../../workspace/entities/workspace.entity";
+import slugify from "slugify";
 
 export enum ContentStatus {
-  DRAFT = 'draft',
-  IN_REVIEW = 'in_review',
-  APPROVED = 'approved',
-  SCHEDULED = 'scheduled',
-  PUBLISHED = 'published',
-  ARCHIVED = 'archived',
+  DRAFT = "draft",
+  IN_REVIEW = "in_review",
+  APPROVED = "approved",
+  SCHEDULED = "scheduled",
+  PUBLISHED = "published",
+  ARCHIVED = "archived",
 }
 
 export enum ContentType {
-  BLOG_POST = 'blog_post',
-  SOCIAL_POST = 'social_post',
-  NEWSLETTER = 'newsletter',
-  VIDEO_SCRIPT = 'video_script',
-  PODCAST_NOTES = 'podcast_notes',
-  THREAD = 'thread',
-  CAROUSEL = 'carousel',
-  STORY = 'story',
-  AD_COPY = 'ad_copy',
-  LANDING_PAGE = 'landing_page',
-  EMAIL = 'email',
-  PRESS_RELEASE = 'press_release',
-  PRODUCT_DESCRIPTION = 'product_description',
-  CUSTOM = 'custom',
+  BLOG_POST = "blog_post",
+  SOCIAL_POST = "social_post",
+  NEWSLETTER = "newsletter",
+  VIDEO_SCRIPT = "video_script",
+  PODCAST_NOTES = "podcast_notes",
+  THREAD = "thread",
+  CAROUSEL = "carousel",
+  STORY = "story",
+  AD_COPY = "ad_copy",
+  LANDING_PAGE = "landing_page",
+  EMAIL = "email",
+  PRESS_RELEASE = "press_release",
+  PRODUCT_DESCRIPTION = "product_description",
+  CUSTOM = "custom",
 }
 
-@Entity('contents')
-@Index(['slug', 'workspaceId'], { unique: true })
-@Index(['status', 'scheduledAt'])
-@Index(['createdAt'])
+@Entity("contents")
+@Index(["slug", "workspaceId"], { unique: true })
+@Index(["status", "scheduledAt"])
+@Index(["createdAt"])
 export class Content {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ length: 500 })
@@ -49,26 +58,26 @@ export class Content {
   @Column({ length: 600, unique: false })
   slug: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   excerpt: string;
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: "jsonb" })
   body: Record<string, any>;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   plainText: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   htmlContent: string;
 
-  @Column({ type: 'enum', enum: ContentType, default: ContentType.BLOG_POST })
+  @Column({ type: "enum", enum: ContentType, default: ContentType.BLOG_POST })
   type: ContentType;
 
-  @Column({ type: 'enum', enum: ContentStatus, default: ContentStatus.DRAFT })
+  @Column({ type: "enum", enum: ContentStatus, default: ContentStatus.DRAFT })
   status: ContentStatus;
 
   // SEO Metadata
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   seo: {
     metaTitle: string;
     metaDescription: string;
@@ -84,7 +93,7 @@ export class Content {
   };
 
   // AI Metadata
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   aiMetadata: {
     generatedBy: string;
     prompt?: string;
@@ -98,7 +107,7 @@ export class Content {
   };
 
   // Social Variants
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   socialVariants: {
     twitter?: { text: string; mediaIds?: string[] };
     linkedin?: { text: string; mediaIds?: string[] };
@@ -107,19 +116,19 @@ export class Content {
     tiktok?: { caption: string; mediaIds?: string[] };
   };
 
-  @Column({ type: 'simple-array', nullable: true })
+  @Column({ type: "simple-array", nullable: true })
   platforms: string[];
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   scheduledAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   publishedAt: Date;
 
   @Column({ nullable: true })
   featuredImage: string;
 
-  @Column({ type: 'simple-array', nullable: true })
+  @Column({ type: "simple-array", nullable: true })
   mediaAttachments: string[];
 
   @ManyToOne(() => User, (user) => user.contents, { eager: true })
@@ -144,19 +153,19 @@ export class Content {
     eager: true,
   })
   @JoinTable({
-    name: 'content_tags_junction',
-    joinColumn: { name: 'contentId' },
-    inverseJoinColumn: { name: 'tagId' },
+    name: "content_tags_junction",
+    joinColumn: { name: "contentId" },
+    inverseJoinColumn: { name: "tagId" },
   })
   tags: ContentTag[];
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: "int", default: 0 })
   viewCount: number;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: "int", default: 0 })
   shareCount: number;
 
-  @Column({ type: 'int', default: 1 })
+  @Column({ type: "int", default: 1 })
   currentVersion: number;
 
   @CreateDateColumn()
@@ -165,7 +174,7 @@ export class Content {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   deletedAt: Date;
 
   @BeforeInsert()

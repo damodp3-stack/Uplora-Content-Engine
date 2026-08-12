@@ -1,6 +1,6 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import * as fs from "fs";
+import * as path from "path";
 
 export interface SchemaValidationResult {
   valid: boolean;
@@ -22,16 +22,18 @@ export class SchemaValidatorService implements OnModuleInit {
   private loadSchemas(): void {
     const schemasPath = path.resolve(
       __dirname,
-      '../../../../..',
-      'packages/shared-types/schemas/uplora-schemas.json',
+      "../../../../..",
+      "packages/shared-types/schemas/uplora-schemas.json",
     );
 
     try {
       if (fs.existsSync(schemasPath)) {
-        const raw = fs.readFileSync(schemasPath, 'utf-8');
+        const raw = fs.readFileSync(schemasPath, "utf-8");
         const doc = JSON.parse(raw);
         this.schemas = doc.schemas || {};
-        this.logger.log(`✅ Loaded ${Object.keys(this.schemas).length} JSON validation schemas`);
+        this.logger.log(
+          `✅ Loaded ${Object.keys(this.schemas).length} JSON validation schemas`,
+        );
       }
     } catch (err) {
       this.logger.warn(`Could not load uplora-schemas.json: ${err.message}`);
@@ -40,7 +42,7 @@ export class SchemaValidatorService implements OnModuleInit {
 
   validate(schemaName: string, data: any): SchemaValidationResult {
     const schema = this.schemas[schemaName];
-    if (!schema || !data || typeof data !== 'object') {
+    if (!schema || !data || typeof data !== "object") {
       return { valid: true, errors: [] };
     }
 
@@ -48,7 +50,11 @@ export class SchemaValidatorService implements OnModuleInit {
 
     if (Array.isArray(schema.required)) {
       for (const reqField of schema.required) {
-        if (data[reqField] === undefined || data[reqField] === null || data[reqField] === '') {
+        if (
+          data[reqField] === undefined ||
+          data[reqField] === null ||
+          data[reqField] === ""
+        ) {
           errors.push({ field: reqField, message: `${reqField} is required` });
         }
       }
@@ -61,7 +67,7 @@ export class SchemaValidatorService implements OnModuleInit {
   }
 
   validateAIRequest(data: any): SchemaValidationResult {
-    return this.validate('AIRequest', data);
+    return this.validate("AIRequest", data);
   }
 
   getLoadedSchemas(): string[] {

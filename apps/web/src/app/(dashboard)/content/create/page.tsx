@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { RichTextEditor } from '@/components/editor/RichTextEditor';
-import { AIAssistantPanel } from '@/components/editor/AIAssistantPanel';
-import { SEOScoreCard } from '@/components/editor/SEOScoreCard';
-import { PostPreview } from '@/components/social/PostPreview';
-import { Save, Send, Calendar as CalendarIcon, Sparkles } from 'lucide-react';
+import React, { useState } from "react";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
+import { AIAssistantPanel } from "@/components/editor/AIAssistantPanel";
+import { SEOScoreCard } from "@/components/editor/SEOScoreCard";
+import { PostPreview } from "@/components/social/PostPreview";
+import { Save, Send, Calendar as CalendarIcon, Sparkles } from "lucide-react";
 
 export default function CreateContentPage() {
-  const [title, setTitle] = useState('10 AI Productivity Hacks for 2026');
+  const [title, setTitle] = useState("10 AI Productivity Hacks for 2026");
   const [content, setContent] = useState(
     `# 10 AI Productivity Hacks for 2026\n\nArtificial Intelligence is transforming how modern content teams write, optimize, and publish. In this guide, we explore actionable strategies to leverage open-source models like Llama3 alongside NestJS and Next.js microservices.\n\n## 1. Local AI Generation with Zero API Costs\nUsing tools like Ollama, creators can run 100% free local LLMs without incurring cloud API costs...\n\n## 2. Automated SEO and Keyword Analysis\nReal-time keyword density calculations allow authors to optimize titles, headings, and readability scores prior to publishing.`,
   );
 
   const handleInsertAiContent = (generatedText: string) => {
-    setContent((prev) => prev + '\n\n' + generatedText);
+    setContent((prev) => prev + "\n\n" + generatedText);
   };
 
   return (
@@ -26,8 +26,12 @@ export default function CreateContentPage() {
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-white">AI Content Writer Studio</h1>
-            <p className="text-xs text-gray-400">Draft, optimize SEO, and generate copy with local & cloud AI</p>
+            <h1 className="text-lg font-bold text-white">
+              AI Content Writer Studio
+            </h1>
+            <p className="text-xs text-gray-400">
+              Draft, optimize SEO, and generate copy with local & cloud AI
+            </p>
           </div>
         </div>
 

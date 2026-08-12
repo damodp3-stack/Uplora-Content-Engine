@@ -1,19 +1,52 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Twitter, Linkedin, Instagram, FileText } from 'lucide-react';
+import React, { useState } from "react";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Twitter,
+  Linkedin,
+  Instagram,
+  FileText,
+} from "lucide-react";
 
-const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const sampleEvents = [
-  { id: '1', date: 5, title: '10 AI Hacks Thread', type: 'twitter', status: 'published' },
-  { id: '2', date: 12, title: 'SEO Pillars Post', type: 'blog', status: 'scheduled' },
-  { id: '3', date: 15, title: 'Productivity Carousel', type: 'instagram', status: 'scheduled' },
-  { id: '4', date: 22, title: 'Industry Insights Story', type: 'linkedin', status: 'draft' },
+  {
+    id: "1",
+    date: 5,
+    title: "10 AI Hacks Thread",
+    type: "twitter",
+    status: "published",
+  },
+  {
+    id: "2",
+    date: 12,
+    title: "SEO Pillars Post",
+    type: "blog",
+    status: "scheduled",
+  },
+  {
+    id: "3",
+    date: 15,
+    title: "Productivity Carousel",
+    type: "instagram",
+    status: "scheduled",
+  },
+  {
+    id: "4",
+    date: 22,
+    title: "Industry Insights Story",
+    type: "linkedin",
+    status: "draft",
+  },
 ];
 
 export function ContentCalendar() {
-  const [currentMonth, setCurrentMonth] = useState('August 2026');
+  const [currentMonth, setCurrentMonth] = useState("August 2026");
 
   return (
     <div className="glass-card rounded-2xl p-6 border border-gray-800 flex flex-col gap-6">
@@ -25,7 +58,9 @@ export function ContentCalendar() {
           </div>
           <div>
             <h2 className="font-bold text-lg text-white">{currentMonth}</h2>
-            <p className="text-xs text-gray-400">Drag and drop scheduled posts</p>
+            <p className="text-xs text-gray-400">
+              Drag and drop scheduled posts
+            </p>
           </div>
         </div>
 
@@ -62,7 +97,9 @@ export function ContentCalendar() {
               className="h-28 glass-panel rounded-xl p-2 flex flex-col justify-between border border-gray-800/60 hover:border-purple-500/40 transition-colors group cursor-pointer"
             >
               <div className="flex items-center justify-between">
-                <span className={`text-xs font-bold ${dayNum === 11 ? 'text-purple-400 bg-purple-500/20 px-1.5 py-0.5 rounded-md' : 'text-gray-400'}`}>
+                <span
+                  className={`text-xs font-bold ${dayNum === 11 ? "text-purple-400 bg-purple-500/20 px-1.5 py-0.5 rounded-md" : "text-gray-400"}`}
+                >
                   {dayNum}
                 </span>
                 <button className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-white text-xs transition-opacity">
@@ -76,17 +113,25 @@ export function ContentCalendar() {
                   <div
                     key={ev.id}
                     className={`p-1.5 rounded-lg text-[10px] font-semibold border flex items-center gap-1 truncate ${
-                      ev.status === 'published'
-                        ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300'
-                        : ev.status === 'scheduled'
-                        ? 'bg-purple-950/30 border-purple-500/30 text-purple-300'
-                        : 'bg-gray-800/40 border-gray-700 text-gray-300'
+                      ev.status === "published"
+                        ? "bg-emerald-950/30 border-emerald-500/30 text-emerald-300"
+                        : ev.status === "scheduled"
+                          ? "bg-purple-950/30 border-purple-500/30 text-purple-300"
+                          : "bg-gray-800/40 border-gray-700 text-gray-300"
                     }`}
                   >
-                    {ev.type === 'twitter' && <Twitter className="w-3 h-3 text-sky-400 shrink-0" />}
-                    {ev.type === 'linkedin' && <Linkedin className="w-3 h-3 text-blue-400 shrink-0" />}
-                    {ev.type === 'instagram' && <Instagram className="w-3 h-3 text-pink-400 shrink-0" />}
-                    {ev.type === 'blog' && <FileText className="w-3 h-3 text-purple-400 shrink-0" />}
+                    {ev.type === "twitter" && (
+                      <Twitter className="w-3 h-3 text-sky-400 shrink-0" />
+                    )}
+                    {ev.type === "linkedin" && (
+                      <Linkedin className="w-3 h-3 text-blue-400 shrink-0" />
+                    )}
+                    {ev.type === "instagram" && (
+                      <Instagram className="w-3 h-3 text-pink-400 shrink-0" />
+                    )}
+                    {ev.type === "blog" && (
+                      <FileText className="w-3 h-3 text-purple-400 shrink-0" />
+                    )}
                     <span className="truncate">{ev.title}</span>
                   </div>
                 ))}

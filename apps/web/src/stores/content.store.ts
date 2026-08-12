@@ -1,17 +1,17 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 export interface ContentStoreState {
   activeContentId: string | null;
-  selectedAiProvider: 'openai' | 'ollama' | 'huggingface';
+  selectedAiProvider: "openai" | "ollama" | "huggingface";
   isAiGenerating: boolean;
   setActiveContentId: (id: string | null) => void;
-  setAiProvider: (provider: 'openai' | 'ollama' | 'huggingface') => void;
+  setAiProvider: (provider: "openai" | "ollama" | "huggingface") => void;
   setIsAiGenerating: (loading: boolean) => void;
 }
 
 export const useContentStore = create<ContentStoreState>((set) => ({
   activeContentId: null,
-  selectedAiProvider: 'ollama',
+  selectedAiProvider: "ollama",
   isAiGenerating: false,
   setActiveContentId: (id) => set({ activeContentId: id }),
   setAiProvider: (provider) => set({ selectedAiProvider: provider }),

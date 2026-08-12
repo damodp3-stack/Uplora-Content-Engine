@@ -1,10 +1,10 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { KnowledgeDocument } from './entities/knowledge-document.entity';
-import { BrandProfile } from './entities/brand-profile.entity';
-import { EmbeddingService } from './embedding.service';
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { KnowledgeDocument } from "./entities/knowledge-document.entity";
+import { BrandProfile } from "./entities/brand-profile.entity";
+import { EmbeddingService } from "./embedding.service";
 
 export interface SearchResult {
   id: string;
@@ -28,7 +28,7 @@ export class VectorStoreService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.logger.log('✅ VectorStoreService initialized');
+    this.logger.log("✅ VectorStoreService initialized");
   }
 
   async searchKnowledge(
@@ -37,7 +37,10 @@ export class VectorStoreService implements OnModuleInit {
     topK: number = 5,
   ): Promise<SearchResult[]> {
     const queryEmb = await this.embeddingService.embed(query);
-    const docs = await this.docRepo.find({ where: { workspaceId }, take: topK * 3 });
+    const docs = await this.docRepo.find({
+      where: { workspaceId },
+      take: topK * 3,
+    });
 
     const results: SearchResult[] = docs.map((doc) => {
       const docEmb = this.embeddingService.embed(doc.content);
@@ -69,7 +72,7 @@ export class VectorStoreService implements OnModuleInit {
         title: `${title} (chunk ${i + 1}/${chunks.length})`,
         content: chunks[i],
         sourceUrl,
-        type: 'paste',
+        type: "paste",
         chunkIndex: i,
         metadata: { originalTitle: title, chunkIndex: i },
       });
@@ -84,7 +87,7 @@ export class VectorStoreService implements OnModuleInit {
     const words = text.split(/\s+/);
     const chunks: string[] = [];
     for (let i = 0; i < words.length; i += maxWords) {
-      chunks.push(words.slice(i, i + maxWords).join(' '));
+      chunks.push(words.slice(i, i + maxWords).join(" "));
     }
     return chunks.length > 0 ? chunks : [text];
   }

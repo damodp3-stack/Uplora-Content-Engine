@@ -1,27 +1,27 @@
 export enum ContentStatus {
-  DRAFT = 'draft',
-  IN_REVIEW = 'in_review',
-  APPROVED = 'approved',
-  SCHEDULED = 'scheduled',
-  PUBLISHED = 'published',
-  ARCHIVED = 'archived',
+  DRAFT = "draft",
+  IN_REVIEW = "in_review",
+  APPROVED = "approved",
+  SCHEDULED = "scheduled",
+  PUBLISHED = "published",
+  ARCHIVED = "archived",
 }
 
 export enum ContentType {
-  BLOG_POST = 'blog_post',
-  SOCIAL_POST = 'social_post',
-  NEWSLETTER = 'newsletter',
-  VIDEO_SCRIPT = 'video_script',
-  PODCAST_NOTES = 'podcast_notes',
-  THREAD = 'thread',
-  CAROUSEL = 'carousel',
-  STORY = 'story',
-  AD_COPY = 'ad_copy',
-  LANDING_PAGE = 'landing_page',
-  EMAIL = 'email',
-  PRESS_RELEASE = 'press_release',
-  PRODUCT_DESCRIPTION = 'product_description',
-  CUSTOM = 'custom',
+  BLOG_POST = "blog_post",
+  SOCIAL_POST = "social_post",
+  NEWSLETTER = "newsletter",
+  VIDEO_SCRIPT = "video_script",
+  PODCAST_NOTES = "podcast_notes",
+  THREAD = "thread",
+  CAROUSEL = "carousel",
+  STORY = "story",
+  AD_COPY = "ad_copy",
+  LANDING_PAGE = "landing_page",
+  EMAIL = "email",
+  PRESS_RELEASE = "press_release",
+  PRODUCT_DESCRIPTION = "product_description",
+  CUSTOM = "custom",
 }
 
 export interface SEOMetadata {
@@ -39,10 +39,10 @@ export interface SEOMetadata {
 }
 
 export interface AIMetadata {
-  generatedBy: 'openai' | 'anthropic' | 'ollama' | 'huggingface' | 'manual';
+  generatedBy: "openai" | "anthropic" | "ollama" | "huggingface" | "manual";
   prompt?: string;
   tokensUsed?: number;
-  sentiment?: 'positive' | 'neutral' | 'negative';
+  sentiment?: "positive" | "neutral" | "negative";
   toneAnalysis?: Record<string, number>;
   suggestedHashtags?: string[];
   estimatedReadTime?: number; // minutes
@@ -118,4 +118,3 @@ export interface UploraSchemas {
   ai_request: Record<string, any>;
   api_response: Record<string, any>;
 }
-

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useEffect, useRef, useState, useCallback } from "react";
+import { io, Socket } from "socket.io-client";
 
 export interface PresentUser {
   userId: string;
@@ -13,46 +13,47 @@ export function useCollaboration(contentId: string | null) {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [presentUsers, setPresentUsers] = useState<PresentUser[]>([]);
-  const [myColor, setMyColor] = useState('#4ECDC4');
+  const [myColor, setMyColor] = useState("#4ECDC4");
 
   useEffect(() => {
     if (!contentId) return;
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const socket = io(
-      `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000'}/collaboration`,
+      `${process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:4000"}/collaboration`,
       {
-        auth: { token: token || 'mock-jwt-token' },
-        transports: ['websocket'],
+        auth: { token: token || "mock-jwt-token" },
+        transports: ["websocket"],
         reconnection: true,
       },
     );
 
     socketRef.current = socket;
 
-    socket.on('connect', () => {
+    socket.on("connect", () => {
       setIsConnected(true);
-      socket.emit('document:join', { contentId });
+      socket.emit("document:join", { contentId });
     });
 
-    socket.on('disconnect', () => {
+    socket.on("disconnect", () => {
       setIsConnected(false);
       setPresentUsers([]);
     });
 
-    socket.on('connected', (data: { color: string }) => {
+    socket.on("connected", (data: { color: string }) => {
       setMyColor(data.color);
     });
 
-    socket.on('document:joined', (data: { presentUsers: PresentUser[] }) => {
+    socket.on("document:joined", (data: { presentUsers: PresentUser[] }) => {
       setPresentUsers(data.presentUsers || []);
     });
 
-    socket.on('user:joined', (data: { presentUsers: PresentUser[] }) => {
+    socket.on("user:joined", (data: { presentUsers: PresentUser[] }) => {
       setPresentUsers(data.presentUsers || []);
     });
 
-    socket.on('user:left', (data: { presentUsers: PresentUser[] }) => {
+    socket.on("user:left", (data: { presentUsers: PresentUser[] }) => {
       setPresentUsers(data.presentUsers || []);
     });
 
@@ -64,7 +65,7 @@ export function useCollaboration(contentId: string | null) {
   }, [contentId]);
 
   const moveCursor = useCallback((anchor: number, head: number) => {
-    socketRef.current?.emit('cursor:move', { anchor, head });
+    socketRef.current?.emit("cursor:move", { anchor, head });
   }, []);
 
   return {

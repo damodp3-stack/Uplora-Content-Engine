@@ -1,7 +1,16 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Bold, Italic, List, Heading1, Heading2, Quote, Link as LinkIcon, Sparkles } from 'lucide-react';
+import React, { useState } from "react";
+import {
+  Bold,
+  Italic,
+  List,
+  Heading1,
+  Heading2,
+  Quote,
+  Link as LinkIcon,
+  Sparkles,
+} from "lucide-react";
 
 interface RichTextEditorProps {
   value: string;
@@ -10,7 +19,12 @@ interface RichTextEditorProps {
   onTitleChange: (title: string) => void;
 }
 
-export function RichTextEditor({ value, onChange, title, onTitleChange }: RichTextEditorProps) {
+export function RichTextEditor({
+  value,
+  onChange,
+  title,
+  onTitleChange,
+}: RichTextEditorProps) {
   return (
     <div className="glass-card rounded-2xl p-6 border border-gray-800 flex flex-col gap-4">
       {/* Document Title Input */}
@@ -24,27 +38,48 @@ export function RichTextEditor({ value, onChange, title, onTitleChange }: RichTe
 
       {/* Editor Toolbar */}
       <div className="flex items-center gap-1 border-b border-gray-800 pb-3 text-gray-400">
-        <button className="p-1.5 rounded-lg hover:bg-gray-800 hover:text-white transition-colors" title="Bold">
+        <button
+          className="p-1.5 rounded-lg hover:bg-gray-800 hover:text-white transition-colors"
+          title="Bold"
+        >
           <Bold className="w-4 h-4" />
         </button>
-        <button className="p-1.5 rounded-lg hover:bg-gray-800 hover:text-white transition-colors" title="Italic">
+        <button
+          className="p-1.5 rounded-lg hover:bg-gray-800 hover:text-white transition-colors"
+          title="Italic"
+        >
           <Italic className="w-4 h-4" />
         </button>
         <div className="h-4 w-px bg-gray-800 mx-1"></div>
-        <button className="p-1.5 rounded-lg hover:bg-gray-800 hover:text-white transition-colors" title="Heading 1">
+        <button
+          className="p-1.5 rounded-lg hover:bg-gray-800 hover:text-white transition-colors"
+          title="Heading 1"
+        >
           <Heading1 className="w-4 h-4" />
         </button>
-        <button className="p-1.5 rounded-lg hover:bg-gray-800 hover:text-white transition-colors" title="Heading 2">
+        <button
+          className="p-1.5 rounded-lg hover:bg-gray-800 hover:text-white transition-colors"
+          title="Heading 2"
+        >
           <Heading2 className="w-4 h-4" />
         </button>
         <div className="h-4 w-px bg-gray-800 mx-1"></div>
-        <button className="p-1.5 rounded-lg hover:bg-gray-800 hover:text-white transition-colors" title="List">
+        <button
+          className="p-1.5 rounded-lg hover:bg-gray-800 hover:text-white transition-colors"
+          title="List"
+        >
           <List className="w-4 h-4" />
         </button>
-        <button className="p-1.5 rounded-lg hover:bg-gray-800 hover:text-white transition-colors" title="Quote">
+        <button
+          className="p-1.5 rounded-lg hover:bg-gray-800 hover:text-white transition-colors"
+          title="Quote"
+        >
           <Quote className="w-4 h-4" />
         </button>
-        <button className="p-1.5 rounded-lg hover:bg-gray-800 hover:text-white transition-colors" title="Insert Link">
+        <button
+          className="p-1.5 rounded-lg hover:bg-gray-800 hover:text-white transition-colors"
+          title="Insert Link"
+        >
           <LinkIcon className="w-4 h-4" />
         </button>
       </div>

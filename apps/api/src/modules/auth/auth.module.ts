@@ -1,11 +1,11 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { User } from './entities/user.entity';
-import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
-import { JwtStrategy } from './strategies/jwt.strategy';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { JwtModule } from "@nestjs/jwt";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { User } from "./entities/user.entity";
+import { AuthService } from "./auth.service";
+import { AuthController } from "./auth.controller";
+import { JwtStrategy } from "./strategies/jwt.strategy";
 
 @Module({
   imports: [
@@ -14,8 +14,10 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') || 'super-secret-uplora-jwt-token-key',
-        signOptions: { expiresIn: '7d' },
+        secret:
+          config.get<string>("JWT_SECRET") ||
+          "super-secret-uplora-jwt-token-key",
+        signOptions: { expiresIn: "7d" },
       }),
     }),
   ],

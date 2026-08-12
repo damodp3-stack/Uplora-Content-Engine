@@ -1,9 +1,13 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
-import * as bcrypt from 'bcryptjs';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { User } from "./entities/user.entity";
+import * as bcrypt from "bcryptjs";
 
 @Injectable()
 export class AuthService {
@@ -16,7 +20,7 @@ export class AuthService {
   async register(email: string, password: string, fullName: string) {
     const existing = await this.userRepo.findOne({ where: { email } });
     if (existing) {
-      throw new ConflictException('User with this email already exists');
+      throw new ConflictException("User with this email already exists");
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -24,7 +28,7 @@ export class AuthService {
       email,
       passwordHash,
       fullName,
-      activeWorkspaceId: 'default-workspace',
+      activeWorkspaceId: "default-workspace",
     });
 
     const saved = await this.userRepo.save(user);
@@ -45,16 +49,23 @@ export class AuthService {
   async login(email: string, password: string) {
     const user = await this.userRepo.findOne({
       where: { email },
-      select: ['id', 'email', 'passwordHash', 'fullName', 'role', 'activeWorkspaceId'],
+      select: [
+        "id",
+        "email",
+        "passwordHash",
+        "fullName",
+        "role",
+        "activeWorkspaceId",
+      ],
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     const token = this.generateToken(user);

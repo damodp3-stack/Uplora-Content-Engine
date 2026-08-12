@@ -1,10 +1,11 @@
-import React from 'react';
-import '@/styles/globals.css';
-import type { Metadata } from 'next';
+import React from "react";
+import "@/styles/globals.css";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Uplora Content Engine — Free Open-Source AI Content Platform',
-  description: 'Multi-provider AI generation, SEO optimizer, visual calendar, and multi-channel publisher.',
+  title: "Uplora Content Engine — Free Open-Source AI Content Platform",
+  description:
+    "Multi-provider AI generation, SEO optimizer, visual calendar, and multi-channel publisher.",
 };
 
 export default function RootLayout({

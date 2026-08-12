@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
@@ -14,17 +14,17 @@ import {
   Settings,
   Share2,
   Zap,
-} from 'lucide-react';
+} from "lucide-react";
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Content Library', href: '/content', icon: FileText },
-  { name: 'AI Writer', href: '/content/create', icon: Sparkles, badge: 'FREE' },
-  { name: 'Calendar', href: '/calendar', icon: Calendar },
-  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-  { name: 'Media Assets', href: '/media', icon: FolderOpen },
-  { name: 'AI Templates', href: '/templates', icon: LayoutTemplate },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Content Library", href: "/content", icon: FileText },
+  { name: "AI Writer", href: "/content/create", icon: Sparkles, badge: "FREE" },
+  { name: "Calendar", href: "/calendar", icon: Calendar },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Media Assets", href: "/media", icon: FolderOpen },
+  { name: "AI Templates", href: "/templates", icon: LayoutTemplate },
+  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -39,8 +39,12 @@ export function Sidebar() {
             <Zap className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-white tracking-wide">UPLORA</h1>
-            <p className="text-xs text-purple-400 font-medium">Content Engine v1.0</p>
+            <h1 className="font-bold text-lg text-white tracking-wide">
+              UPLORA
+            </h1>
+            <p className="text-xs text-purple-400 font-medium">
+              Content Engine v1.0
+            </p>
           </div>
         </div>
 
@@ -56,7 +60,9 @@ export function Sidebar() {
         {/* Navigation Items */}
         <nav className="space-y-1">
           {navigation.map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname?.startsWith(item.href));
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/dashboard" && pathname?.startsWith(item.href));
             const Icon = item.icon;
             return (
               <Link
@@ -64,12 +70,14 @@ export function Sidebar() {
                 href={item.href}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   isActive
-                    ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30 shadow-sm'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/40'
+                    ? "bg-purple-600/20 text-purple-300 border border-purple-500/30 shadow-sm"
+                    : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/40"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-purple-400' : 'text-gray-400'}`} />
+                  <Icon
+                    className={`w-4 h-4 ${isActive ? "text-purple-400" : "text-gray-400"}`}
+                  />
                   <span>{item.name}</span>
                 </div>
                 {item.badge && (
@@ -91,7 +99,9 @@ export function Sidebar() {
             ● Ollama / Llama3
           </span>
         </div>
-        <p className="text-[11px] text-gray-500">100% Free Unlimited Local Generation</p>
+        <p className="text-[11px] text-gray-500">
+          100% Free Unlimited Local Generation
+        </p>
       </div>
     </aside>
   );

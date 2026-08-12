@@ -1,12 +1,17 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column, ManyToMany, CreateDateColumn, Index,
-} from 'typeorm';
-import { Content } from './content.entity';
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToMany,
+  CreateDateColumn,
+  Index,
+} from "typeorm";
+import { Content } from "./content.entity";
 
-@Entity('content_tags')
-@Index(['name', 'workspaceId'], { unique: true })
+@Entity("content_tags")
+@Index(["name", "workspaceId"], { unique: true })
 export class ContentTag {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()

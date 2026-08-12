@@ -1,5 +1,5 @@
-import React from 'react';
-import { PresentUser } from '@/hooks/useCollaboration';
+import React from "react";
+import { PresentUser } from "@/hooks/useCollaboration";
 
 interface PresenceBarProps {
   isConnected: boolean;
@@ -11,9 +11,11 @@ export function PresenceBar({ isConnected, presentUsers }: PresenceBarProps) {
   return (
     <div className="flex items-center gap-3 py-1.5 px-3 bg-white rounded-full border shadow-sm">
       <div className="flex items-center gap-1.5 text-xs font-medium">
-        <span className={`h-2 w-2 rounded-full ${isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-        <span className={isConnected ? 'text-slate-700' : 'text-rose-600'}>
-          {isConnected ? 'Live Sync' : 'Offline'}
+        <span
+          className={`h-2 w-2 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`}
+        />
+        <span className={isConnected ? "text-slate-700" : "text-rose-600"}>
+          {isConnected ? "Live Sync" : "Offline"}
         </span>
       </div>
 

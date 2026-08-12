@@ -1,6 +1,6 @@
-import React from 'react';
-import { Sidebar } from '@/components/shared/Sidebar';
-import { Header } from '@/components/shared/Header';
+import React from "react";
+import { Sidebar } from "@/components/shared/Sidebar";
+import { Header } from "@/components/shared/Header";
 
 export default function DashboardLayout({
   children,

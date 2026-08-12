@@ -1,16 +1,20 @@
 import {
-  Injectable, NotFoundException, BadRequestException, Logger, Inject,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, ILike, FindOptionsWhere } from 'typeorm';
-import { Content, ContentStatus, ContentType } from './entities/content.entity';
-import { ContentVersion } from './entities/content-version.entity';
-import { ContentTag } from './entities/content-tag.entity';
-import { CreateContentDto } from './dto/create-content.dto';
-import { UpdateContentDto } from './dto/update-content.dto';
-import { QueryContentDto } from './dto/query-content.dto';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+  Inject,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, ILike, FindOptionsWhere } from "typeorm";
+import { Content, ContentStatus, ContentType } from "./entities/content.entity";
+import { ContentVersion } from "./entities/content-version.entity";
+import { ContentTag } from "./entities/content-tag.entity";
+import { CreateContentDto } from "./dto/create-content.dto";
+import { UpdateContentDto } from "./dto/update-content.dto";
+import { QueryContentDto } from "./dto/query-content.dto";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { CACHE_MANAGER, Cache } from "@nestjs/cache-manager";
 
 @Injectable()
 export class ContentService {
@@ -52,9 +56,9 @@ export class ContentService {
 
       const saved = await this.contentRepo.save(content);
 
-      await this.createVersion(saved, userId, 'Initial creation');
+      await this.createVersion(saved, userId, "Initial creation");
 
-      this.eventEmitter.emit('content.created', {
+      this.eventEmitter.emit("content.created", {
         contentId: saved.id,
         userId,
         workspaceId,
@@ -63,8 +67,13 @@ export class ContentService {
       this.logger.log(`Content created: ${saved.id} by user ${userId}`);
       return saved;
     } catch (error) {
-      this.logger.error(`Failed to create content: ${error.message}`, error.stack);
-      throw new BadRequestException(`Failed to create content: ${error.message}`);
+      this.logger.error(
+        `Failed to create content: ${error.message}`,
+        error.stack,
+      );
+      throw new BadRequestException(
+        `Failed to create content: ${error.message}`,
+      );
     }
   }
 
@@ -80,8 +89,8 @@ export class ContentService {
       type,
       tags,
       authorId,
-      sortBy = 'createdAt',
-      sortOrder = 'DESC',
+      sortBy = "createdAt",
+      sortOrder = "DESC",
       dateFrom,
       dateTo,
     } = query;
@@ -91,43 +100,43 @@ export class ContentService {
     if (cached) return cached as any;
 
     const qb = this.contentRepo
-      .createQueryBuilder('content')
-      .leftJoinAndSelect('content.author', 'author')
-      .leftJoinAndSelect('content.tags', 'tags')
-      .where('content.workspaceId = :workspaceId', { workspaceId })
-      .andWhere('content.deletedAt IS NULL');
+      .createQueryBuilder("content")
+      .leftJoinAndSelect("content.author", "author")
+      .leftJoinAndSelect("content.tags", "tags")
+      .where("content.workspaceId = :workspaceId", { workspaceId })
+      .andWhere("content.deletedAt IS NULL");
 
     if (search) {
       qb.andWhere(
-        '(content.title ILIKE :search OR content.plainText ILIKE :search)',
+        "(content.title ILIKE :search OR content.plainText ILIKE :search)",
         { search: `%${search}%` },
       );
     }
 
     if (status) {
-      qb.andWhere('content.status = :status', { status });
+      qb.andWhere("content.status = :status", { status });
     }
 
     if (type) {
-      qb.andWhere('content.type = :type', { type });
+      qb.andWhere("content.type = :type", { type });
     }
 
     if (authorId) {
-      qb.andWhere('content.authorId = :authorId', { authorId });
+      qb.andWhere("content.authorId = :authorId", { authorId });
     }
 
     if (dateFrom && dateTo) {
-      qb.andWhere('content.createdAt BETWEEN :dateFrom AND :dateTo', {
+      qb.andWhere("content.createdAt BETWEEN :dateFrom AND :dateTo", {
         dateFrom,
         dateTo,
       });
     }
 
     if (tags && tags.length > 0) {
-      qb.andWhere('tags.name IN (:...tags)', { tags });
+      qb.andWhere("tags.name IN (:...tags)", { tags });
     }
 
-    qb.orderBy(`content.${sortBy}`, sortOrder as 'ASC' | 'DESC')
+    qb.orderBy(`content.${sortBy}`, sortOrder as "ASC" | "DESC")
       .skip((page - 1) * limit)
       .take(limit);
 
@@ -146,7 +155,7 @@ export class ContentService {
 
     const content = await this.contentRepo.findOne({
       where: { id, workspaceId, deletedAt: null as any },
-      relations: ['author', 'tags', 'versions'],
+      relations: ["author", "tags", "versions"],
     });
 
     if (!content) {
@@ -178,10 +187,10 @@ export class ContentService {
 
     const saved = await this.contentRepo.save(content);
 
-    await this.createVersion(saved, userId, dto.changeDescription || 'Updated');
+    await this.createVersion(saved, userId, dto.changeDescription || "Updated");
     await this.invalidateCache(id, workspaceId);
 
-    this.eventEmitter.emit('content.updated', {
+    this.eventEmitter.emit("content.updated", {
       contentId: saved.id,
       userId,
     });
@@ -202,7 +211,7 @@ export class ContentService {
     content.publishedAt = new Date();
     const saved = await this.contentRepo.save(content);
 
-    this.eventEmitter.emit('content.published', { contentId: saved.id });
+    this.eventEmitter.emit("content.published", { contentId: saved.id });
     await this.invalidateCache(id, workspaceId);
 
     return saved;
@@ -216,14 +225,14 @@ export class ContentService {
     const content = await this.findOne(id, workspaceId);
 
     if (new Date(scheduledAt) <= new Date()) {
-      throw new BadRequestException('Scheduled time must be in the future');
+      throw new BadRequestException("Scheduled time must be in the future");
     }
 
     content.status = ContentStatus.SCHEDULED;
     content.scheduledAt = scheduledAt;
     const saved = await this.contentRepo.save(content);
 
-    this.eventEmitter.emit('content.scheduled', {
+    this.eventEmitter.emit("content.scheduled", {
       contentId: saved.id,
       scheduledAt,
     });
@@ -239,8 +248,8 @@ export class ContentService {
 
     return this.versionRepo.find({
       where: { contentId },
-      order: { versionNumber: 'DESC' },
-      relations: ['editedBy'],
+      order: { versionNumber: "DESC" },
+      relations: ["editedBy"],
     });
   }
 
@@ -256,7 +265,7 @@ export class ContentService {
     });
 
     if (!version) {
-      throw new NotFoundException('Version not found');
+      throw new NotFoundException("Version not found");
     }
 
     content.body = version.body;
@@ -280,15 +289,29 @@ export class ContentService {
     if (cached) return cached;
 
     const [total, published, drafts, scheduled] = await Promise.all([
-      this.contentRepo.count({ where: { workspaceId, deletedAt: null as any } }),
       this.contentRepo.count({
-        where: { workspaceId, status: ContentStatus.PUBLISHED, deletedAt: null as any },
+        where: { workspaceId, deletedAt: null as any },
       }),
       this.contentRepo.count({
-        where: { workspaceId, status: ContentStatus.DRAFT, deletedAt: null as any },
+        where: {
+          workspaceId,
+          status: ContentStatus.PUBLISHED,
+          deletedAt: null as any,
+        },
       }),
       this.contentRepo.count({
-        where: { workspaceId, status: ContentStatus.SCHEDULED, deletedAt: null as any },
+        where: {
+          workspaceId,
+          status: ContentStatus.DRAFT,
+          deletedAt: null as any,
+        },
+      }),
+      this.contentRepo.count({
+        where: {
+          workspaceId,
+          status: ContentStatus.SCHEDULED,
+          deletedAt: null as any,
+        },
       }),
     ]);
 
@@ -296,20 +319,20 @@ export class ContentService {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const recentContent = await this.contentRepo
-      .createQueryBuilder('c')
-      .select("DATE_TRUNC('day', c.createdAt)", 'date')
-      .addSelect('COUNT(*)', 'count')
-      .where('c.workspaceId = :workspaceId', { workspaceId })
-      .andWhere('c.createdAt >= :from', { from: thirtyDaysAgo })
+      .createQueryBuilder("c")
+      .select("DATE_TRUNC('day', c.createdAt)", "date")
+      .addSelect("COUNT(*)", "count")
+      .where("c.workspaceId = :workspaceId", { workspaceId })
+      .andWhere("c.createdAt >= :from", { from: thirtyDaysAgo })
       .groupBy("DATE_TRUNC('day', c.createdAt)")
-      .orderBy('date', 'ASC')
+      .orderBy("date", "ASC")
       .getRawMany();
 
     const topContent = await this.contentRepo.find({
       where: { workspaceId, status: ContentStatus.PUBLISHED },
-      order: { viewCount: 'DESC' },
+      order: { viewCount: "DESC" },
       take: 5,
-      select: ['id', 'title', 'viewCount', 'shareCount', 'publishedAt'],
+      select: ["id", "title", "viewCount", "shareCount", "publishedAt"],
     });
 
     const stats = {
@@ -366,15 +389,15 @@ export class ContentService {
   }
 
   private extractPlainText(body: Record<string, any>): string {
-    if (!body || !body.content) return typeof body === 'string' ? body : '';
+    if (!body || !body.content) return typeof body === "string" ? body : "";
     return this.walkNodes(body.content);
   }
 
   private walkNodes(nodes: any[]): string {
-    let text = '';
+    let text = "";
     for (const node of nodes) {
-      if (node.type === 'text') {
-        text += node.text + ' ';
+      if (node.type === "text") {
+        text += node.text + " ";
       }
       if (node.content) {
         text += this.walkNodes(node.content);

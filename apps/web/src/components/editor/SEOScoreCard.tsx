@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Target, CheckCircle2, AlertTriangle, BookOpen } from 'lucide-react';
+import React from "react";
+import { Target, CheckCircle2, AlertTriangle, BookOpen } from "lucide-react";
 
 interface SEOScoreCardProps {
   content: string;
@@ -23,10 +23,14 @@ export function SEOScoreCard({ content }: SEOScoreCardProps) {
       <div className="flex items-center justify-between border-b border-gray-800 pb-3">
         <div className="flex items-center gap-2">
           <Target className="w-4 h-4 text-purple-400" />
-          <h3 className="font-bold text-sm text-white">Live SEO & Readability</h3>
+          <h3 className="font-bold text-sm text-white">
+            Live SEO & Readability
+          </h3>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-lg font-extrabold text-emerald-400">{score}</span>
+          <span className="text-lg font-extrabold text-emerald-400">
+            {score}
+          </span>
           <span className="text-xs text-gray-400">/100</span>
         </div>
       </div>
@@ -43,11 +47,15 @@ export function SEOScoreCard({ content }: SEOScoreCardProps) {
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div className="p-2.5 glass-card rounded-xl border border-gray-800">
           <p className="text-[10px] text-gray-400">Word Count</p>
-          <p className="font-bold text-gray-200 text-sm mt-0.5">{wordCount} words</p>
+          <p className="font-bold text-gray-200 text-sm mt-0.5">
+            {wordCount} words
+          </p>
         </div>
         <div className="p-2.5 glass-card rounded-xl border border-gray-800">
           <p className="text-[10px] text-gray-400">Reading Time</p>
-          <p className="font-bold text-gray-200 text-sm mt-0.5">{readTime} min read</p>
+          <p className="font-bold text-gray-200 text-sm mt-0.5">
+            {readTime} min read
+          </p>
         </div>
       </div>
 

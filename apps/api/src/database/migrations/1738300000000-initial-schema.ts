@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class InitialSchema1738300000000 implements MigrationInterface {
-  name = 'InitialSchema1738300000000';
+  name = "InitialSchema1738300000000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
@@ -45,7 +45,9 @@ export class InitialSchema1738300000000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE IF EXISTS "knowledge_documents" CASCADE`);
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS "knowledge_documents" CASCADE`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS "brand_profiles" CASCADE`);
   }
 }

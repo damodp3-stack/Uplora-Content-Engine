@@ -4,7 +4,6 @@
   "description": "Uplora Content Engine — Complete JSON Schema System",
 
   "schemas": {
-
     "Content": {
       "$id": "uplora://schemas/Content",
       "type": "object",
@@ -38,16 +37,30 @@
         "type": {
           "type": "string",
           "enum": [
-            "blog_post", "social_post", "newsletter",
-            "video_script", "thread", "carousel",
-            "ad_copy", "email", "press_release",
-            "product_description", "custom"
+            "blog_post",
+            "social_post",
+            "newsletter",
+            "video_script",
+            "thread",
+            "carousel",
+            "ad_copy",
+            "email",
+            "press_release",
+            "product_description",
+            "custom"
           ],
           "errorMessage": "Invalid content type"
         },
         "status": {
           "type": "string",
-          "enum": ["draft", "in_review", "approved", "scheduled", "published", "archived"],
+          "enum": [
+            "draft",
+            "in_review",
+            "approved",
+            "scheduled",
+            "published",
+            "archived"
+          ],
           "default": "draft"
         },
         "workspaceId": { "type": "string", "format": "uuid" },
@@ -68,10 +81,17 @@
           "items": {
             "type": "string",
             "enum": [
-              "twitter", "linkedin", "instagram",
-              "facebook", "youtube", "tiktok",
-              "pinterest", "reddit", "medium",
-              "dev_to", "wordpress"
+              "twitter",
+              "linkedin",
+              "instagram",
+              "facebook",
+              "youtube",
+              "tiktok",
+              "pinterest",
+              "reddit",
+              "medium",
+              "dev_to",
+              "wordpress"
             ]
           },
           "uniqueItems": true
@@ -171,12 +191,24 @@
         "type": {
           "type": "string",
           "enum": [
-            "blog_post", "twitter_post", "twitter_thread",
-            "linkedin_post", "instagram_caption", "facebook_post",
-            "tiktok_script", "email_newsletter", "email_cold_outreach",
-            "video_script_youtube", "ad_copy_google", "ad_copy_social",
-            "content_repurpose", "seo_analysis", "title_generator",
-            "hashtag_generator", "content_brief", "content_strategy"
+            "blog_post",
+            "twitter_post",
+            "twitter_thread",
+            "linkedin_post",
+            "instagram_caption",
+            "facebook_post",
+            "tiktok_script",
+            "email_newsletter",
+            "email_cold_outreach",
+            "video_script_youtube",
+            "ad_copy_google",
+            "ad_copy_social",
+            "content_repurpose",
+            "seo_analysis",
+            "title_generator",
+            "hashtag_generator",
+            "content_brief",
+            "content_strategy"
           ]
         },
         "tone": { "type": "string", "default": "professional" },

@@ -1,12 +1,16 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  UpdateDateColumn, OneToMany,
-} from 'typeorm';
-import { Content } from '../../content/entities/content.entity';
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from "typeorm";
+import { Content } from "../../content/entities/content.entity";
 
-@Entity('workspaces')
+@Entity("workspaces")
 export class Workspace {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()

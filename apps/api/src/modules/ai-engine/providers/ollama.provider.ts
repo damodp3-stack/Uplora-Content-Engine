@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import axios from "axios";
 
 @Injectable()
 export class OllamaProvider {
@@ -13,8 +13,9 @@ export class OllamaProvider {
     userPrompt: string,
     maxTokens: number = 2000,
   ): Promise<{ content: string; model: string; tokens: number }> {
-    const baseUrl = this.config.get<string>('ai.ollamaBaseUrl') || 'http://localhost:11434';
-    const model = this.config.get<string>('ai.ollamaModel') || 'llama3';
+    const baseUrl =
+      this.config.get<string>("ai.ollamaBaseUrl") || "http://localhost:11434";
+    const model = this.config.get<string>("ai.ollamaModel") || "llama3";
 
     try {
       const response = await axios.post(
@@ -36,7 +37,9 @@ export class OllamaProvider {
         tokens: response.data.eval_count || 150,
       };
     } catch (error) {
-      this.logger.warn(`Ollama provider unavailable at ${baseUrl}: ${error.message}`);
+      this.logger.warn(
+        `Ollama provider unavailable at ${baseUrl}: ${error.message}`,
+      );
       return {
         content: `🚀 [Ollama Free Local AI Engine]\n\nKey Insights:\n1. Engaging opening hook to grab audience attention.\n2. In-depth analysis of requested topic with actionable points.\n3. Powerful conclusion and call-to-action.\n\nPrompt details processed: ${userPrompt.substring(0, 100)}`,
         model: `ollama/${model}-mock`,

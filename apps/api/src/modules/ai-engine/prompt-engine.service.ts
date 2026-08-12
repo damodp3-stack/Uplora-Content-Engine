@@ -1,6 +1,6 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
+import * as fs from "fs";
+import * as path from "path";
 
 export interface PromptTemplate {
   id: string;
@@ -65,37 +65,54 @@ export class PromptEngineService implements OnModuleInit {
   }
 
   private loadConfig(): void {
-    const configPath = path.resolve(__dirname, 'config', 'master-prompts.json');
+    const configPath = path.resolve(__dirname, "config", "master-prompts.json");
 
     try {
       if (fs.existsSync(configPath)) {
-        const raw = fs.readFileSync(configPath, 'utf-8');
+        const raw = fs.readFileSync(configPath, "utf-8");
         this.config = JSON.parse(raw);
-        this.logger.log(`✅ master-prompts.json v${this.config.version} loaded successfully`);
+        this.logger.log(
+          `✅ master-prompts.json v${this.config.version} loaded successfully`,
+        );
       } else {
         this.config = this.buildDefaultConfig();
       }
     } catch (error) {
-      this.logger.warn(`Failed to parse master-prompts.json, using fallback defaults: ${error.message}`);
+      this.logger.warn(
+        `Failed to parse master-prompts.json, using fallback defaults: ${error.message}`,
+      );
       this.config = this.buildDefaultConfig();
     }
   }
 
-  build(templateId: string, variables: Record<string, string> = {}): BuildResult {
-    const template = this.config.prompt_templates[templateId] || this.config.prompt_templates['blog_post'];
-    const systemPromptDef = this.config.system_prompts[template.system_prompt_id] || this.config.system_prompts['content_writer'];
+  build(
+    templateId: string,
+    variables: Record<string, string> = {},
+  ): BuildResult {
+    const template =
+      this.config.prompt_templates[templateId] ||
+      this.config.prompt_templates["blog_post"];
+    const systemPromptDef =
+      this.config.system_prompts[template.system_prompt_id] ||
+      this.config.system_prompts["content_writer"];
 
     const mergedVars: Record<string, string> = {
       ...template.default_variables,
       ...variables,
     };
 
-    const systemRaw = systemPromptDef?.template || systemPromptDef?.content || this.config.system_prompts.base?.content || '';
+    const systemRaw =
+      systemPromptDef?.template ||
+      systemPromptDef?.content ||
+      this.config.system_prompts.base?.content ||
+      "";
     const systemPrompt = this.interpolate(systemRaw, mergedVars);
     const userPrompt = this.interpolate(template.user_prompt, mergedVars);
 
     const required = systemPromptDef?.required_variables || [];
-    const missingVariables = required.filter((v) => !mergedVars[v] || mergedVars[v] === '');
+    const missingVariables = required.filter(
+      (v) => !mergedVars[v] || mergedVars[v] === "",
+    );
 
     return {
       systemPrompt,
@@ -113,7 +130,9 @@ export class PromptEngineService implements OnModuleInit {
     const wordCount = content.split(/\s+/).filter(Boolean).length;
 
     if (wordCount < (rules.min_word_count || 50)) {
-      issues.push(`Too short: ${wordCount} words (min ${rules.min_word_count})`);
+      issues.push(
+        `Too short: ${wordCount} words (min ${rules.min_word_count})`,
+      );
     }
 
     const lower = content.toLowerCase().trimStart();
@@ -133,7 +152,10 @@ export class PromptEngineService implements OnModuleInit {
     return {
       isValid: issues.length === 0,
       issues,
-      retryPrompt: issues.length > 0 ? `${rules.retry_instruction}\nIssues found: ${issues.join('; ')}` : undefined,
+      retryPrompt:
+        issues.length > 0
+          ? `${rules.retry_instruction}\nIssues found: ${issues.join("; ")}`
+          : undefined,
     };
   }
 
@@ -149,13 +171,13 @@ export class PromptEngineService implements OnModuleInit {
 
   getLengthGuide(templateId: string, length: string): string {
     const template = this.config.prompt_templates[templateId];
-    if (!template?.length_options) return '1200-1800 words';
-    return template.length_options[length]?.words || '1200-1800 words';
+    if (!template?.length_options) return "1200-1800 words";
+    return template.length_options[length]?.words || "1200-1800 words";
   }
 
   getSectionCount(templateId: string, length: string): string {
     const template = this.config.prompt_templates[templateId];
-    return template?.length_options?.[length]?.section_count || '5';
+    return template?.length_options?.[length]?.section_count || "5";
   }
 
   getTemplateIds(): string[] {
@@ -167,7 +189,7 @@ export class PromptEngineService implements OnModuleInit {
   }
 
   getVersion(): string {
-    return this.config?.version || '3.0.0';
+    return this.config?.version || "3.0.0";
   }
 
   getMaxRetries(): number {
@@ -176,37 +198,48 @@ export class PromptEngineService implements OnModuleInit {
 
   private interpolate(template: string, vars: Record<string, string>): string {
     return template.replace(/\{(\w+)\}/g, (_, key) => {
-      return vars[key] !== undefined && vars[key] !== null ? String(vars[key]) : '';
+      return vars[key] !== undefined && vars[key] !== null
+        ? String(vars[key])
+        : "";
     });
   }
 
   private buildDefaultConfig() {
     return {
-      version: '3.0.0-fallback',
+      version: "3.0.0-fallback",
       providers: {},
       system_prompts: {
-        base: { id: 'base', content: 'You are Uplora AI, an expert content creator.' },
-        content_writer: { id: 'content_writer', content: 'You are Uplora AI copywriter.' },
+        base: {
+          id: "base",
+          content: "You are Uplora AI, an expert content creator.",
+        },
+        content_writer: {
+          id: "content_writer",
+          content: "You are Uplora AI copywriter.",
+        },
       },
       prompt_templates: {
         blog_post: {
-          id: 'blog_post',
-          name: 'Blog Post',
-          system_prompt_id: 'content_writer',
-          category: 'long_form',
-          user_prompt: 'Write a blog post about {topic}',
+          id: "blog_post",
+          name: "Blog Post",
+          system_prompt_id: "content_writer",
+          category: "long_form",
+          user_prompt: "Write a blog post about {topic}",
         },
       },
       response_validation: {
         content_rules: {
           min_word_count: 50,
-          forbidden_openings: ['Here is', "Here's"],
-          forbidden_placeholders: ['[Your Name]'],
+          forbidden_openings: ["Here is", "Here's"],
+          forbidden_placeholders: ["[Your Name]"],
           retry_on_violation: true,
           max_retries: 2,
-          retry_instruction: 'Rewrite content directly.',
+          retry_instruction: "Rewrite content directly.",
         },
-        json_rules: { extraction_pattern: 'first_complete_json_object', fallback_on_parse_failure: true },
+        json_rules: {
+          extraction_pattern: "first_complete_json_object",
+          fallback_on_parse_failure: true,
+        },
       },
       platform_requirements: {},
     };

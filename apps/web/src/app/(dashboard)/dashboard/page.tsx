@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
+import React from "react";
+import Link from "next/link";
 import {
   Sparkles,
   FileText,
@@ -12,8 +12,8 @@ import {
   ArrowUpRight,
   TrendingUp,
   Zap,
-} from 'lucide-react';
-import { EngagementChart } from '@/components/analytics/EngagementChart';
+} from "lucide-react";
+import { EngagementChart } from "@/components/analytics/EngagementChart";
 
 export default function DashboardPage() {
   return (
@@ -30,7 +30,9 @@ export default function DashboardPage() {
               Welcome back to Uplora Content Studio
             </h1>
             <p className="text-xs text-gray-300 max-w-xl mt-1 leading-relaxed">
-              Generate AI copy with local Ollama models, optimize SEO scores, schedule visual calendar posts, and publish multi-platform content with zero cost.
+              Generate AI copy with local Ollama models, optimize SEO scores,
+              schedule visual calendar posts, and publish multi-platform content
+              with zero cost.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -88,7 +90,9 @@ export default function DashboardPage() {
 
         <div className="glass-card rounded-2xl p-5 border border-gray-800 flex items-center justify-between">
           <div>
-            <p className="text-xs text-gray-400 font-medium">Total Engagement</p>
+            <p className="text-xs text-gray-400 font-medium">
+              Total Engagement
+            </p>
             <p className="text-2xl font-extrabold text-white mt-1">154.9K</p>
             <p className="text-[11px] text-emerald-400 flex items-center gap-1 mt-1 font-semibold">
               <TrendingUp className="w-3 h-3" /> +24.8% growth
@@ -110,7 +114,10 @@ export default function DashboardPage() {
         <div className="glass-card rounded-2xl p-5 border border-gray-800 flex flex-col gap-4">
           <div className="flex items-center justify-between border-b border-gray-800 pb-3">
             <h3 className="font-bold text-sm text-white">Recent Drafts</h3>
-            <Link href="/content" className="text-xs text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1">
+            <Link
+              href="/content"
+              className="text-xs text-purple-400 hover:text-purple-300 font-semibold flex items-center gap-1"
+            >
               View All <ArrowUpRight className="w-3 h-3" />
             </Link>
           </div>
@@ -118,8 +125,12 @@ export default function DashboardPage() {
           <div className="space-y-3">
             <div className="p-3 glass-panel rounded-xl border border-gray-800 hover:border-purple-500/40 transition-colors flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold text-white truncate max-w-[180px]">10 AI Hacks for Productivity</p>
-                <p className="text-[10px] text-gray-400">Updated 10m ago • Draft</p>
+                <p className="text-xs font-bold text-white truncate max-w-[180px]">
+                  10 AI Hacks for Productivity
+                </p>
+                <p className="text-[10px] text-gray-400">
+                  Updated 10m ago • Draft
+                </p>
               </div>
               <span className="text-[10px] bg-purple-500/20 text-purple-300 font-bold px-2 py-0.5 rounded-full border border-purple-500/30">
                 SEO 88
@@ -128,8 +139,12 @@ export default function DashboardPage() {
 
             <div className="p-3 glass-panel rounded-xl border border-gray-800 hover:border-purple-500/40 transition-colors flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold text-white truncate max-w-[180px]">LinkedIn Thought Leadership</p>
-                <p className="text-[10px] text-gray-400">Updated 1h ago • Scheduled</p>
+                <p className="text-xs font-bold text-white truncate max-w-[180px]">
+                  LinkedIn Thought Leadership
+                </p>
+                <p className="text-[10px] text-gray-400">
+                  Updated 1h ago • Scheduled
+                </p>
               </div>
               <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
                 Scheduled
@@ -138,8 +153,12 @@ export default function DashboardPage() {
 
             <div className="p-3 glass-panel rounded-xl border border-gray-800 hover:border-purple-500/40 transition-colors flex items-center justify-between">
               <div>
-                <p className="text-xs font-bold text-white truncate max-w-[180px]">Weekly Growth Newsletter</p>
-                <p className="text-[10px] text-gray-400">Updated 4h ago • Published</p>
+                <p className="text-xs font-bold text-white truncate max-w-[180px]">
+                  Weekly Growth Newsletter
+                </p>
+                <p className="text-[10px] text-gray-400">
+                  Updated 4h ago • Published
+                </p>
               </div>
               <span className="text-[10px] bg-sky-500/20 text-sky-300 font-bold px-2 py-0.5 rounded-full border border-sky-500/30">
                 Published

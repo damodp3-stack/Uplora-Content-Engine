@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { ContentCalendar } from '@/components/calendar/ContentCalendar';
+import React from "react";
+import { ContentCalendar } from "@/components/calendar/ContentCalendar";
 
 export default function CalendarPage() {
   return (

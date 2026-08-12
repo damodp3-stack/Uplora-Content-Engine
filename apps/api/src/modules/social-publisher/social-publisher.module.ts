@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
-import { SocialPublisherService } from './social-publisher.service';
-import { SocialPublisherController } from './social-publisher.controller';
+import { Module } from "@nestjs/common";
+import { SocialPublisherService } from "./social-publisher.service";
+import { SocialPublisherController } from "./social-publisher.controller";
 
 @Module({
   controllers: [SocialPublisherController],

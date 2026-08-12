@@ -1,22 +1,24 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Sparkles, Bot, Cpu, Zap, RefreshCw, Check } from 'lucide-react';
-import axios from 'axios';
+import React, { useState } from "react";
+import { Sparkles, Bot, Cpu, Zap, RefreshCw, Check } from "lucide-react";
+import axios from "axios";
 
 interface AIAssistantPanelProps {
   onInsertContent: (text: string) => void;
 }
 
 export function AIAssistantPanel({ onInsertContent }: AIAssistantPanelProps) {
-  const [provider, setProvider] = useState<'ollama' | 'openai' | 'huggingface'>('ollama');
-  const [prompt, setPrompt] = useState('');
-  const [contentType, setContentType] = useState('blog');
-  const [tone, setTone] = useState('professional');
-  const [length, setLength] = useState('medium');
-  const [keywords, setKeywords] = useState('');
+  const [provider, setProvider] = useState<"ollama" | "openai" | "huggingface">(
+    "ollama",
+  );
+  const [prompt, setPrompt] = useState("");
+  const [contentType, setContentType] = useState("blog");
+  const [tone, setTone] = useState("professional");
+  const [length, setLength] = useState("medium");
+  const [keywords, setKeywords] = useState("");
   const [loading, setLoading] = useState(false);
-  const [generatedOutput, setGeneratedOutput] = useState('');
+  const [generatedOutput, setGeneratedOutput] = useState("");
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -24,14 +26,20 @@ export function AIAssistantPanel({ onInsertContent }: AIAssistantPanelProps) {
 
     try {
       // Call NestJS API backend endpoint
-      const res = await axios.post('http://localhost:4000/v1/ai-engine/generate', {
-        prompt,
-        type: contentType,
-        tone,
-        length,
-        provider,
-        keywords: keywords.split(',').map((k) => k.trim()).filter(Boolean),
-      });
+      const res = await axios.post(
+        "http://localhost:4000/v1/ai-engine/generate",
+        {
+          prompt,
+          type: contentType,
+          tone,
+          length,
+          provider,
+          keywords: keywords
+            .split(",")
+            .map((k) => k.trim())
+            .filter(Boolean),
+        },
+      );
 
       setGeneratedOutput(res.data.content);
     } catch (error) {
@@ -64,7 +72,7 @@ export function AIAssistantPanel({ onInsertContent }: AIAssistantPanelProps) {
           <h3 className="font-bold text-sm text-white">AI Content Co-Pilot</h3>
         </div>
         <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
-          {provider === 'ollama' ? 'FREE LOCAL' : provider.toUpperCase()}
+          {provider === "ollama" ? "FREE LOCAL" : provider.toUpperCase()}
         </span>
       </div>
 
@@ -76,11 +84,11 @@ export function AIAssistantPanel({ onInsertContent }: AIAssistantPanelProps) {
         <div className="grid grid-cols-3 gap-2">
           <button
             type="button"
-            onClick={() => setProvider('ollama')}
+            onClick={() => setProvider("ollama")}
             className={`p-2 rounded-xl text-xs font-medium border flex flex-col items-center gap-1 transition-all ${
-              provider === 'ollama'
-                ? 'bg-purple-600/20 border-purple-500 text-purple-300 shadow-glow'
-                : 'border-gray-800 text-gray-400 hover:bg-gray-800/40'
+              provider === "ollama"
+                ? "bg-purple-600/20 border-purple-500 text-purple-300 shadow-glow"
+                : "border-gray-800 text-gray-400 hover:bg-gray-800/40"
             }`}
           >
             <Cpu className="w-3.5 h-3.5" />
@@ -88,11 +96,11 @@ export function AIAssistantPanel({ onInsertContent }: AIAssistantPanelProps) {
           </button>
           <button
             type="button"
-            onClick={() => setProvider('openai')}
+            onClick={() => setProvider("openai")}
             className={`p-2 rounded-xl text-xs font-medium border flex flex-col items-center gap-1 transition-all ${
-              provider === 'openai'
-                ? 'bg-purple-600/20 border-purple-500 text-purple-300 shadow-glow'
-                : 'border-gray-800 text-gray-400 hover:bg-gray-800/40'
+              provider === "openai"
+                ? "bg-purple-600/20 border-purple-500 text-purple-300 shadow-glow"
+                : "border-gray-800 text-gray-400 hover:bg-gray-800/40"
             }`}
           >
             <Bot className="w-3.5 h-3.5" />
@@ -100,11 +108,11 @@ export function AIAssistantPanel({ onInsertContent }: AIAssistantPanelProps) {
           </button>
           <button
             type="button"
-            onClick={() => setProvider('huggingface')}
+            onClick={() => setProvider("huggingface")}
             className={`p-2 rounded-xl text-xs font-medium border flex flex-col items-center gap-1 transition-all ${
-              provider === 'huggingface'
-                ? 'bg-purple-600/20 border-purple-500 text-purple-300 shadow-glow'
-                : 'border-gray-800 text-gray-400 hover:bg-gray-800/40'
+              provider === "huggingface"
+                ? "bg-purple-600/20 border-purple-500 text-purple-300 shadow-glow"
+                : "border-gray-800 text-gray-400 hover:bg-gray-800/40"
             }`}
           >
             <Zap className="w-3.5 h-3.5" />
@@ -158,7 +166,9 @@ export function AIAssistantPanel({ onInsertContent }: AIAssistantPanelProps) {
 
       {/* Keywords Input */}
       <div>
-        <label className="block text-[10px] text-gray-400 mb-1">Target Keywords (Comma Separated)</label>
+        <label className="block text-[10px] text-gray-400 mb-1">
+          Target Keywords (Comma Separated)
+        </label>
         <input
           type="text"
           value={keywords}
@@ -191,7 +201,9 @@ export function AIAssistantPanel({ onInsertContent }: AIAssistantPanelProps) {
       {generatedOutput && (
         <div className="mt-2 p-3 bg-purple-950/20 border border-purple-500/30 rounded-xl flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-purple-300">Generated Preview</span>
+            <span className="text-[10px] font-bold text-purple-300">
+              Generated Preview
+            </span>
             <button
               onClick={() => onInsertContent(generatedOutput)}
               className="text-[11px] bg-purple-600 text-white font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1 hover:bg-purple-500 transition-colors"

@@ -45,7 +45,7 @@
       "max_tokens": 4096,
       "temperature": 0.7,
       "cost_per_1k_input_tokens": 0.00015,
-      "cost_per_1k_output_tokens": 0.00060,
+      "cost_per_1k_output_tokens": 0.0006,
       "supports_system_prompt": true
     }
   },
@@ -58,7 +58,15 @@
     "content_writer": {
       "id": "content_writer",
       "template": "You are Uplora AI, an expert {content_type} writer.\n\nWRITING PARAMETERS:\n- Language: {language}\n- Tone: {tone}\n- Target Audience: {target_audience}\n- Content Length: {length_guide}\n- Platform: {platform}\n- Focus Keywords (use naturally, never forced): {keywords}\n\nSTRICT RULES:\n1. Write publication-ready content immediately — no preamble\n2. Never include placeholder text\n3. Never explain what you're about to write\n4. Active voice 80%+\n5. No clichés (avoid: 'In today's world', 'In conclusion', 'It goes without saying')\n6. Hook must appear in the first sentence\n7. Every section must earn its place",
-      "required_variables": ["content_type", "language", "tone", "target_audience", "length_guide", "platform", "keywords"],
+      "required_variables": [
+        "content_type",
+        "language",
+        "tone",
+        "target_audience",
+        "length_guide",
+        "platform",
+        "keywords"
+      ],
       "optional_variables": ["brand_name", "industry", "competitors"]
     },
     "seo_analyst": {

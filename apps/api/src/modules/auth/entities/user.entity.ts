@@ -1,19 +1,23 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  UpdateDateColumn, OneToMany,
-} from 'typeorm';
-import { Content } from '../../content/entities/content.entity';
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from "typeorm";
+import { Content } from "../../content/entities/content.entity";
 
 export enum UserRole {
-  ADMIN = 'admin',
-  EDITOR = 'editor',
-  CREATOR = 'creator',
-  VIEWER = 'viewer',
+  ADMIN = "admin",
+  EDITOR = "editor",
+  CREATOR = "creator",
+  VIEWER = "viewer",
 }
 
-@Entity('users')
+@Entity("users")
 export class User {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ unique: true })
@@ -28,10 +32,10 @@ export class User {
   @Column({ nullable: true })
   avatarUrl: string;
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.CREATOR })
+  @Column({ type: "enum", enum: UserRole, default: UserRole.CREATOR })
   role: UserRole;
 
-  @Column({ default: 'default-workspace' })
+  @Column({ default: "default-workspace" })
   activeWorkspaceId: string;
 
   @OneToMany(() => Content, (content) => content.author)

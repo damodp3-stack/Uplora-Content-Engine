@@ -1,32 +1,35 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column, ManyToOne,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
   CreateDateColumn,
-} from 'typeorm';
-import { Content } from './content.entity';
-import { User } from '../../auth/entities/user.entity';
+} from "typeorm";
+import { Content } from "./content.entity";
+import { User } from "../../auth/entities/user.entity";
 
-@Entity('content_versions')
+@Entity("content_versions")
 export class ContentVersion {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   versionNumber: number;
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: "jsonb" })
   body: Record<string, any>;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   plainText: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   seo: Record<string, any>;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   changeDescription: string;
 
   @ManyToOne(() => Content, (content) => content.versions, {
-    onDelete: 'CASCADE',
+    onDelete: "CASCADE",
   })
   content: Content;
 

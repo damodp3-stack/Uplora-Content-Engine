@@ -3,13 +3,13 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-} from 'typeorm';
+} from "typeorm";
 
-export type KnowledgeDocType = 'file' | 'url' | 'notion' | 'gdocs' | 'paste';
+export type KnowledgeDocType = "file" | "url" | "notion" | "gdocs" | "paste";
 
-@Entity('knowledge_documents')
+@Entity("knowledge_documents")
 export class KnowledgeDocument {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
@@ -18,19 +18,19 @@ export class KnowledgeDocument {
   @Column()
   title: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: "text" })
   content: string;
 
   @Column({ nullable: true })
   sourceUrl: string;
 
-  @Column({ default: 'paste' })
+  @Column({ default: "paste" })
   type: KnowledgeDocType;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: "jsonb", nullable: true })
   metadata: Record<string, any>;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: "int", default: 0 })
   chunkIndex: number;
 
   @Column({ nullable: true })
