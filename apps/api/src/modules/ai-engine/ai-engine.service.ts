@@ -3,11 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { OpenAIProvider } from './providers/openai.provider';
 import { OllamaProvider } from './providers/ollama.provider';
 import { HuggingFaceProvider } from './providers/huggingface.provider';
-import masterPromptsConfig from './config/master-prompts.json';
+import { PromptEngineService } from './prompt-engine.service';
 
 export interface AIGenerationRequest {
   prompt: string;
-  type: string; // e.g. 'blog_post', 'twitter_post', 'linkedin_post', 'seo_analysis', etc.
+  type: string;
   tone?: string;
   length?: string;
   language?: string;
@@ -40,10 +40,10 @@ export interface AIGenerationResponse {
 @Injectable()
 export class AIEngineService {
   private readonly logger = new Logger(AIEngineService.name);
-  private readonly promptSystem = masterPromptsConfig;
 
   constructor(
     private readonly config: ConfigService,
+    private readonly promptEngine: PromptEngineService,
     private readonly openaiProvider: OpenAIProvider,
     private readonly ollamaProvider: OllamaProvider,
     private readonly huggingfaceProvider: HuggingFaceProvider,
@@ -54,8 +54,16 @@ export class AIEngineService {
   ): Promise<AIGenerationResponse> {
     const startTime = Date.now();
 
-    const systemPrompt = this.buildSystemPrompt(request);
-    const userPrompt = this.buildUserPrompt(request);
+    const built = this.promptEngine.build(request.type, {
+      topic: request.prompt,
+      prompt: request.prompt,
+      tone: request.tone || 'professional',
+      language: request.language || 'English',
+      target_audience: request.targetAudience || 'general',
+      platform: request.platform || 'general',
+      keywords: (request.keywords || []).join(', '),
+      ...(request.templateVariables || {}),
+    });
 
     let result: { content: string; model: string; tokens: number };
     const provider = request.provider || this.selectBestProvider();
@@ -64,30 +72,30 @@ export class AIEngineService {
       switch (provider) {
         case 'ollama':
           result = await this.ollamaProvider.generate(
-            systemPrompt,
-            userPrompt,
+            built.systemPrompt,
+            built.userPrompt,
             request.maxTokens,
           );
           break;
         case 'huggingface':
           result = await this.huggingfaceProvider.generate(
-            systemPrompt,
-            userPrompt,
+            built.systemPrompt,
+            built.userPrompt,
             request.maxTokens,
           );
           break;
         case 'openai':
         default:
           result = await this.openaiProvider.generate(
-            systemPrompt,
-            userPrompt,
+            built.systemPrompt,
+            built.userPrompt,
             request.maxTokens,
           );
           break;
       }
     } catch (error) {
       this.logger.warn(`Provider ${provider} failed, trying fallback: ${error.message}`);
-      result = await this.fallbackGeneration(systemPrompt, userPrompt, provider, request.maxTokens);
+      result = await this.fallbackGeneration(built.systemPrompt, built.userPrompt, provider, request.maxTokens);
     }
 
     const suggestions = await this.generateSuggestions(result.content, request);
@@ -100,7 +108,7 @@ export class AIEngineService {
         tokensUsed: result.tokens,
         generationTime: Date.now() - startTime,
         cost: provider === 'ollama' || provider === 'huggingface' ? 0 : 0.002,
-        promptVersion: this.promptSystem.version,
+        promptVersion: this.promptEngine.getVersion(),
       },
       suggestions,
     };
@@ -150,66 +158,6 @@ export class AIEngineService {
     }
 
     return results;
-  }
-
-  private buildSystemPrompt(request: AIGenerationRequest): string {
-    const templates = this.promptSystem.prompt_templates as Record<string, any>;
-    const template = templates[request.type];
-    const systemPrompts = this.promptSystem.system_prompts as Record<string, any>;
-
-    let sysPromptObj = systemPrompts.content_writer;
-    if (template?.system_prompt_id && systemPrompts[template.system_prompt_id]) {
-      sysPromptObj = systemPrompts[template.system_prompt_id];
-    }
-
-    const baseRule = systemPrompts.base?.content || '';
-
-    if (sysPromptObj.template) {
-      let result = sysPromptObj.template;
-      const vars: Record<string, string> = {
-        content_type: request.type.replace('_', ' '),
-        language: request.language || 'English',
-        tone: request.tone || 'professional',
-        target_audience: request.targetAudience || 'general audience',
-        length_guide: request.length || 'medium',
-        platform: request.platform || 'general',
-        keywords: (request.keywords || []).join(', ') || 'none',
-        ...(request.templateVariables || {}),
-      };
-
-      for (const [k, v] of Object.entries(vars)) {
-        result = result.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
-      }
-      return `${baseRule}\n\n${result}`;
-    }
-
-    return `${baseRule}\n\n${sysPromptObj.content || ''}`;
-  }
-
-  private buildUserPrompt(request: AIGenerationRequest): string {
-    const templates = this.promptSystem.prompt_templates as Record<string, any>;
-    const tplObj = templates[request.type] || templates['blog_post'];
-
-    let promptTpl = tplObj.user_prompt || 'Write about: {topic}';
-
-    const defaultVars = tplObj.default_variables || {};
-    const vars: Record<string, string> = {
-      ...defaultVars,
-      topic: request.prompt,
-      tone: request.tone || defaultVars.tone || 'professional',
-      target_audience: request.targetAudience || defaultVars.target_audience || 'general',
-      language: request.language || defaultVars.language || 'English',
-      keywords: (request.keywords || []).join(', ') || defaultVars.keywords || '',
-      focus_keyword: (request.keywords || [])[0] || request.prompt,
-      secondary_keywords: (request.keywords || []).slice(1).join(', ') || 'none',
-      ...(request.templateVariables || {}),
-    };
-
-    for (const [k, v] of Object.entries(vars)) {
-      promptTpl = promptTpl.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
-    }
-
-    return promptTpl;
   }
 
   private selectBestProvider(): 'openai' | 'ollama' | 'huggingface' {
