@@ -1,0 +1,268 @@
+{
+  "uplora_schemas": {
+    "version": "3.0.0",
+    "content": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$id": "uplora://schemas/content",
+      "type": "object",
+      "title": "Content",
+      "required": ["title", "body", "type", "workspaceId", "authorId"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Auto-generated UUID"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 500,
+          "description": "Content title"
+        },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "maxLength": 600,
+          "description": "URL-safe slug, auto-generated from title"
+        },
+        "excerpt": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Short summary for previews and SEO"
+        },
+        "body": {
+          "type": "object",
+          "description": "TipTap JSON document structure",
+          "required": ["type", "content"],
+          "properties": {
+            "type": { "type": "string", "const": "doc" },
+            "content": {
+              "type": "array"
+            }
+          }
+        },
+        "plainText": {
+          "type": "string",
+          "description": "Extracted plain text for search indexing"
+        },
+        "htmlContent": {
+          "type": "string",
+          "description": "Rendered HTML version"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "blog_post", "social_post", "newsletter",
+            "video_script", "thread", "carousel",
+            "ad_copy", "email", "press_release",
+            "product_description", "custom"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "in_review", "approved", "scheduled", "published", "archived"],
+          "default": "draft"
+        },
+        "workspaceId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "authorId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "maxItems": 20,
+          "uniqueItems": true
+        },
+        "platforms": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "twitter", "linkedin", "instagram", "facebook",
+              "youtube", "tiktok", "pinterest", "reddit",
+              "medium", "dev_to", "wordpress"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "scheduledAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "featuredImage": {
+          "type": "string",
+          "format": "uri"
+        },
+        "mediaAttachments": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" },
+          "maxItems": 20
+        },
+        "currentVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "user": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$id": "uplora://schemas/user",
+      "type": "object",
+      "required": ["name", "email", "password"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 255
+        },
+        "password": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+        },
+        "role": {
+          "type": "string",
+          "enum": ["super_admin", "admin", "editor", "viewer"],
+          "default": "editor"
+        },
+        "avatar": {
+          "type": "string",
+          "format": "uri"
+        },
+        "isEmailVerified": {
+          "type": "boolean",
+          "default": false
+        },
+        "isActive": {
+          "type": "boolean",
+          "default": true
+        },
+        "activeWorkspaceId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "workspace": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$id": "uplora://schemas/workspace",
+      "type": "object",
+      "required": ["name", "ownerId"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "slug": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "description": { "type": "string", "maxLength": 500 },
+        "ownerId": { "type": "string", "format": "uuid" },
+        "plan": {
+          "type": "string",
+          "enum": ["free", "pro", "team", "enterprise"],
+          "default": "free"
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ai_request": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$id": "uplora://schemas/ai_request",
+      "type": "object",
+      "required": ["prompt", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 5000
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "blog_post", "social_post", "newsletter",
+            "video_script", "thread", "ad_copy",
+            "email", "repurpose", "seo_analysis",
+            "title_generator", "hashtag_research",
+            "content_brief", "content_strategy"
+          ]
+        },
+        "tone": {
+          "type": "string",
+          "default": "professional"
+        },
+        "length": {
+          "type": "string",
+          "default": "medium"
+        },
+        "language": {
+          "type": "string",
+          "default": "English"
+        },
+        "targetAudience": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "keywords": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 100 },
+          "maxItems": 10
+        },
+        "provider": {
+          "type": "string",
+          "enum": ["ollama", "huggingface", "openai"]
+        }
+      }
+    },
+    "api_response": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$id": "uplora://schemas/api_response",
+      "type": "object",
+      "required": ["success"],
+      "properties": {
+        "success": { "type": "boolean" },
+        "data": {},
+        "message": { "type": "string" },
+        "error": {
+          "type": "object",
+          "required": ["code", "message"],
+          "properties": {
+            "code": { "type": "string" },
+            "message": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

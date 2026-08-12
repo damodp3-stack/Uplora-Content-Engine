@@ -99,3 +99,23 @@ export interface DashboardStats {
     publishedAt: string;
   }>;
 }
+
+export interface MasterPromptConfig {
+  version: string;
+  name: string;
+  description: string;
+  providers: Record<string, any>;
+  system_prompts: Record<string, any>;
+  prompt_templates: Record<string, any>;
+  response_validators: Record<string, any>;
+}
+
+export interface UploraSchemas {
+  version: string;
+  content: Record<string, any>;
+  user: Record<string, any>;
+  workspace: Record<string, any>;
+  ai_request: Record<string, any>;
+  api_response: Record<string, any>;
+}
+

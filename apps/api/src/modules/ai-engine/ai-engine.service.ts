@@ -3,12 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { OpenAIProvider } from './providers/openai.provider';
 import { OllamaProvider } from './providers/ollama.provider';
 import { HuggingFaceProvider } from './providers/huggingface.provider';
+import masterPromptsConfig from './config/master-prompts.json';
 
 export interface AIGenerationRequest {
   prompt: string;
-  type: 'blog' | 'social' | 'email' | 'ad' | 'script' | 'thread' | 'seo';
+  type: 'blog' | 'social' | 'email' | 'ad' | 'script' | 'thread' | 'seo' | 'title_generator' | 'content_brief' | 'content_strategy' | 'hashtag_research';
   tone?: 'professional' | 'casual' | 'humorous' | 'formal' | 'inspirational';
-  length?: 'short' | 'medium' | 'long';
+  length?: 'short' | 'medium' | 'long' | 'pillar';
   language?: string;
   targetAudience?: string;
   keywords?: string[];
@@ -25,6 +26,7 @@ export interface AIGenerationResponse {
     tokensUsed: number;
     generationTime: number;
     cost: number;
+    promptVersion: string;
   };
   suggestions: {
     titles: string[];
@@ -37,6 +39,7 @@ export interface AIGenerationResponse {
 @Injectable()
 export class AIEngineService {
   private readonly logger = new Logger(AIEngineService.name);
+  private readonly promptSystem = masterPromptsConfig.uplora_prompt_system;
 
   constructor(
     private readonly config: ConfigService,
@@ -96,6 +99,7 @@ export class AIEngineService {
         tokensUsed: result.tokens,
         generationTime: Date.now() - startTime,
         cost: provider === 'ollama' || provider === 'huggingface' ? 0 : 0.002,
+        promptVersion: this.promptSystem.version,
       },
       suggestions,
     };
@@ -148,11 +152,34 @@ export class AIEngineService {
   }
 
   private buildSystemPrompt(request: AIGenerationRequest): string {
-    return `You are Uplora AI, an elite content generation engine. Tone: ${request.tone || 'professional'}. Target audience: ${request.targetAudience || 'general'}. Language: ${request.language || 'English'}. Produce engaging, world-class copy.`;
+    const baseIdentity = this.promptSystem.system_prompts.base_identity.content;
+    const tone = request.tone || 'professional';
+    const language = request.language || 'English';
+    const targetAudience = request.targetAudience || 'general';
+    const platform = request.platform || 'general';
+    const keywords = (request.keywords || []).join(', ');
+    const lengthGuide = request.length || 'medium';
+
+    return `${baseIdentity}\n\nSTRICT RULES:\n- Write in ${language} language\n- Tone must be: ${tone}\n- Target audience: ${targetAudience}\n- Content length: ${lengthGuide}\n- Include keywords naturally: ${keywords}\n- Platform: ${platform}\n- DO NOT write meta-commentary like 'Here is your article...'\n- DO NOT include placeholders\n- Active voice primary (80%+)`;
   }
 
   private buildUserPrompt(request: AIGenerationRequest): string {
-    return `Create a ${request.type} piece based on the topic/prompt: "${request.prompt}". Keywords to include: ${(request.keywords || []).join(', ')}. Format: ${request.length || 'medium'} length.`;
+    const templates = this.promptSystem.prompt_templates as Record<string, any>;
+    const reqType = request.type === 'blog' ? 'blog_post' : request.type === 'social' ? 'social_post' : request.type;
+
+    if (templates[reqType]?.user_prompt_template) {
+      let tpl = templates[reqType].user_prompt_template;
+      return tpl
+        .replace('{tone}', request.tone || 'professional')
+        .replace('{topic}', request.prompt)
+        .replace('{focus_keyword}', (request.keywords || [])[0] || request.prompt)
+        .replace('{secondary_keywords}', (request.keywords || []).slice(1).join(', '))
+        .replace('{word_count_target}', request.length === 'long' ? '2500' : '1500')
+        .replace('{extra_context}', request.targetAudience || '')
+        .replace('{sections}', 'Intro, Body, Actionable Tips, Conclusion');
+    }
+
+    return `Create a ${request.type} piece based on topic: "${request.prompt}". Target audience: ${request.targetAudience || 'general'}. Keywords: ${(request.keywords || []).join(', ')}.`;
   }
 
   private selectBestProvider(): 'openai' | 'ollama' | 'huggingface' {
