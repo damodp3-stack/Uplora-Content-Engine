@@ -6,9 +6,10 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
+    "resolveJsonModule": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "schemas/**/*"]
 }
