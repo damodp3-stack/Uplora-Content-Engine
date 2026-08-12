@@ -7,15 +7,16 @@ import masterPromptsConfig from './config/master-prompts.json';
 
 export interface AIGenerationRequest {
   prompt: string;
-  type: 'blog' | 'social' | 'email' | 'ad' | 'script' | 'thread' | 'seo' | 'title_generator' | 'content_brief' | 'content_strategy' | 'hashtag_research';
-  tone?: 'professional' | 'casual' | 'humorous' | 'formal' | 'inspirational';
-  length?: 'short' | 'medium' | 'long' | 'pillar';
+  type: string; // e.g. 'blog_post', 'twitter_post', 'linkedin_post', 'seo_analysis', etc.
+  tone?: string;
+  length?: string;
   language?: string;
   targetAudience?: string;
   keywords?: string[];
   platform?: string;
   provider?: 'openai' | 'ollama' | 'huggingface';
   maxTokens?: number;
+  templateVariables?: Record<string, string>;
 }
 
 export interface AIGenerationResponse {
@@ -39,7 +40,7 @@ export interface AIGenerationResponse {
 @Injectable()
 export class AIEngineService {
   private readonly logger = new Logger(AIEngineService.name);
-  private readonly promptSystem = masterPromptsConfig.uplora_prompt_system;
+  private readonly promptSystem = masterPromptsConfig;
 
   constructor(
     private readonly config: ConfigService,
@@ -152,34 +153,63 @@ export class AIEngineService {
   }
 
   private buildSystemPrompt(request: AIGenerationRequest): string {
-    const baseIdentity = this.promptSystem.system_prompts.base_identity.content;
-    const tone = request.tone || 'professional';
-    const language = request.language || 'English';
-    const targetAudience = request.targetAudience || 'general';
-    const platform = request.platform || 'general';
-    const keywords = (request.keywords || []).join(', ');
-    const lengthGuide = request.length || 'medium';
+    const templates = this.promptSystem.prompt_templates as Record<string, any>;
+    const template = templates[request.type];
+    const systemPrompts = this.promptSystem.system_prompts as Record<string, any>;
 
-    return `${baseIdentity}\n\nSTRICT RULES:\n- Write in ${language} language\n- Tone must be: ${tone}\n- Target audience: ${targetAudience}\n- Content length: ${lengthGuide}\n- Include keywords naturally: ${keywords}\n- Platform: ${platform}\n- DO NOT write meta-commentary like 'Here is your article...'\n- DO NOT include placeholders\n- Active voice primary (80%+)`;
+    let sysPromptObj = systemPrompts.content_writer;
+    if (template?.system_prompt_id && systemPrompts[template.system_prompt_id]) {
+      sysPromptObj = systemPrompts[template.system_prompt_id];
+    }
+
+    const baseRule = systemPrompts.base?.content || '';
+
+    if (sysPromptObj.template) {
+      let result = sysPromptObj.template;
+      const vars: Record<string, string> = {
+        content_type: request.type.replace('_', ' '),
+        language: request.language || 'English',
+        tone: request.tone || 'professional',
+        target_audience: request.targetAudience || 'general audience',
+        length_guide: request.length || 'medium',
+        platform: request.platform || 'general',
+        keywords: (request.keywords || []).join(', ') || 'none',
+        ...(request.templateVariables || {}),
+      };
+
+      for (const [k, v] of Object.entries(vars)) {
+        result = result.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+      }
+      return `${baseRule}\n\n${result}`;
+    }
+
+    return `${baseRule}\n\n${sysPromptObj.content || ''}`;
   }
 
   private buildUserPrompt(request: AIGenerationRequest): string {
     const templates = this.promptSystem.prompt_templates as Record<string, any>;
-    const reqType = request.type === 'blog' ? 'blog_post' : request.type === 'social' ? 'social_post' : request.type;
+    const tplObj = templates[request.type] || templates['blog_post'];
 
-    if (templates[reqType]?.user_prompt_template) {
-      let tpl = templates[reqType].user_prompt_template;
-      return tpl
-        .replace('{tone}', request.tone || 'professional')
-        .replace('{topic}', request.prompt)
-        .replace('{focus_keyword}', (request.keywords || [])[0] || request.prompt)
-        .replace('{secondary_keywords}', (request.keywords || []).slice(1).join(', '))
-        .replace('{word_count_target}', request.length === 'long' ? '2500' : '1500')
-        .replace('{extra_context}', request.targetAudience || '')
-        .replace('{sections}', 'Intro, Body, Actionable Tips, Conclusion');
+    let promptTpl = tplObj.user_prompt || 'Write about: {topic}';
+
+    const defaultVars = tplObj.default_variables || {};
+    const vars: Record<string, string> = {
+      ...defaultVars,
+      topic: request.prompt,
+      tone: request.tone || defaultVars.tone || 'professional',
+      target_audience: request.targetAudience || defaultVars.target_audience || 'general',
+      language: request.language || defaultVars.language || 'English',
+      keywords: (request.keywords || []).join(', ') || defaultVars.keywords || '',
+      focus_keyword: (request.keywords || [])[0] || request.prompt,
+      secondary_keywords: (request.keywords || []).slice(1).join(', ') || 'none',
+      ...(request.templateVariables || {}),
+    };
+
+    for (const [k, v] of Object.entries(vars)) {
+      promptTpl = promptTpl.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
     }
 
-    return `Create a ${request.type} piece based on topic: "${request.prompt}". Target audience: ${request.targetAudience || 'general'}. Keywords: ${(request.keywords || []).join(', ')}.`;
+    return promptTpl;
   }
 
   private selectBestProvider(): 'openai' | 'ollama' | 'huggingface' {

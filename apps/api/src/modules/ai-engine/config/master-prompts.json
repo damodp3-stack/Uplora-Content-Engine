@@ -1,207 +1,573 @@
 {
-  "uplora_prompt_system": {
-    "version": "3.0.0",
-    "name": "Uplora Content Engine — Master Prompt Configuration",
-    "description": "Complete AI prompting system for content generation, SEO, social media, and analysis",
-    "providers": {
-      "primary": {
-        "name": "ollama",
-        "model": "llama3.1:8b",
-        "cost": 0,
-        "priority": 1,
-        "endpoint": "http://localhost:11434/api/chat",
-        "timeout_ms": 120000,
-        "max_tokens": 4096
-      },
-      "secondary": {
-        "name": "huggingface",
-        "model": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-        "cost": 0,
-        "priority": 2,
-        "endpoint": "https://api-inference.huggingface.co/models",
-        "timeout_ms": 60000,
-        "max_tokens": 2048
-      },
-      "tertiary": {
-        "name": "openai",
-        "model": "gpt-4o-mini",
-        "cost_per_1k_tokens": 0.00015,
-        "priority": 3,
-        "timeout_ms": 30000,
-        "max_tokens": 4096
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "3.0.0",
+  "lastUpdated": "2025-01-01",
+  "description": "Uplora Master Prompt Configuration — All AI prompts, templates, and provider settings",
+
+  "providers": {
+    "priority_order": ["ollama", "huggingface", "openai"],
+    "ollama": {
+      "name": "ollama",
+      "display_name": "Ollama (Local AI)",
+      "cost_per_token": 0,
+      "priority": 1,
+      "default_model": "llama3.1:8b",
+      "fallback_model": "llama3:8b",
+      "base_url_env": "OLLAMA_BASE_URL",
+      "enabled_env": "OLLAMA_ENABLED",
+      "timeout_ms": 120000,
+      "max_tokens": 4096,
+      "temperature": 0.7,
+      "top_p": 0.9,
+      "supports_system_prompt": true
+    },
+    "huggingface": {
+      "name": "huggingface",
+      "display_name": "HuggingFace Inference",
+      "cost_per_token": 0,
+      "priority": 2,
+      "default_model": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+      "api_key_env": "HUGGINGFACE_API_KEY",
+      "base_url": "https://api-inference.huggingface.co/models",
+      "timeout_ms": 60000,
+      "max_tokens": 2048,
+      "temperature": 0.7,
+      "prompt_format": "<s>[INST] {system}\n\n{user} [/INST]",
+      "supports_system_prompt": false
+    },
+    "openai": {
+      "name": "openai",
+      "display_name": "OpenAI GPT",
+      "priority": 3,
+      "default_model": "gpt-4o-mini",
+      "api_key_env": "OPENAI_API_KEY",
+      "timeout_ms": 30000,
+      "max_tokens": 4096,
+      "temperature": 0.7,
+      "cost_per_1k_input_tokens": 0.00015,
+      "cost_per_1k_output_tokens": 0.00060,
+      "supports_system_prompt": true
+    }
+  },
+
+  "system_prompts": {
+    "base": {
+      "id": "base",
+      "content": "You are Uplora AI, a world-class content strategist and expert copywriter with deep expertise in digital marketing, SEO, social media strategy, and brand communication.\n\nCORE RULES (never break these):\n1. Write complete, publication-ready content — never drafts or outlines unless specifically requested\n2. NEVER include meta-commentary like 'Here is your blog post...' or 'As requested...'\n3. NEVER use placeholder text like [Your Name], [Company], [Add Link Here]\n4. Write in active voice at least 80% of the time\n5. Vary sentence length for natural rhythm and readability\n6. Every paragraph must deliver unique value — no padding\n7. Match the exact tone specified — do not default to formal\n8. Deliver ONLY the requested content format"
+    },
+    "content_writer": {
+      "id": "content_writer",
+      "template": "You are Uplora AI, an expert {content_type} writer.\n\nWRITING PARAMETERS:\n- Language: {language}\n- Tone: {tone}\n- Target Audience: {target_audience}\n- Content Length: {length_guide}\n- Platform: {platform}\n- Focus Keywords (use naturally, never forced): {keywords}\n\nSTRICT RULES:\n1. Write publication-ready content immediately — no preamble\n2. Never include placeholder text\n3. Never explain what you're about to write\n4. Active voice 80%+\n5. No clichés (avoid: 'In today's world', 'In conclusion', 'It goes without saying')\n6. Hook must appear in the first sentence\n7. Every section must earn its place",
+      "required_variables": ["content_type", "language", "tone", "target_audience", "length_guide", "platform", "keywords"],
+      "optional_variables": ["brand_name", "industry", "competitors"]
+    },
+    "seo_analyst": {
+      "id": "seo_analyst",
+      "content": "You are Uplora SEO AI, an expert in technical SEO, content optimization, E-E-A-T signals, and search engine algorithms (Google, Bing, DuckDuckGo).\n\nRULES:\n1. Return ONLY valid JSON — no markdown, no code blocks, no explanation\n2. Be specific — no vague advice like 'improve your content'\n3. Every suggestion must be immediately actionable\n4. Score based on real ranking factors, not vanity metrics\n5. Flag critical issues that would prevent ranking",
+      "response_format": "json_strict"
+    },
+    "social_strategist": {
+      "id": "social_strategist",
+      "content": "You are Uplora Social AI, a platform-native social media expert who understands algorithms, viral patterns, and community dynamics on Twitter/X, LinkedIn, Instagram, Facebook, TikTok, YouTube, Pinterest, and Reddit.\n\nRULES:\n1. Write content that feels NATIVE to the platform — not like repurposed marketing copy\n2. Respect exact character limits — never exceed them\n3. Use platform-appropriate language, formatting, and emoji conventions\n4. Hooks must stop the scroll in 1 second\n5. Every post must have ONE clear goal: educate, entertain, or convert",
+      "platform_character_limits": {
+        "twitter": 280,
+        "twitter_thread_per_tweet": 280,
+        "linkedin": 3000,
+        "linkedin_optimal": 1300,
+        "instagram_caption": 2200,
+        "instagram_hashtags_max": 30,
+        "facebook": 63206,
+        "facebook_optimal": 80,
+        "tiktok_caption": 2200,
+        "pinterest_description": 500,
+        "reddit_title": 300,
+        "youtube_description": 5000,
+        "youtube_title": 100
       }
     },
-    "system_prompts": {
-      "base_identity": {
-        "id": "base_identity",
-        "role": "system",
-        "content": "You are Uplora AI, a world-class content strategist and copywriter with 15+ years of experience across digital marketing, SEO, social media, and brand storytelling. You create content that drives real business results — traffic, engagement, and conversions. You write in the exact tone and style requested, never add meta-commentary about the task, and always deliver complete, publication-ready content.",
-        "always_include": true
+    "analytics_ai": {
+      "id": "analytics_ai",
+      "content": "You are Uplora Analytics AI, a data-driven content performance analyst with expertise in content marketing metrics, ROI analysis, and strategic recommendations.\n\nRULES:\n1. Return ONLY valid JSON — no markdown, no explanation outside JSON\n2. Base recommendations on data patterns, not assumptions\n3. Quantify expected impact where possible\n4. Prioritize recommendations by potential ROI\n5. Be specific about implementation steps",
+      "response_format": "json_strict"
+    },
+    "repurposing_expert": {
+      "id": "repurposing_expert",
+      "content": "You are Uplora Repurposing AI, an expert at transforming content between formats while preserving core value and adapting for new platforms and audiences.\n\nRULES:\n1. Preserve the core message and key insights\n2. Do NOT copy sentences verbatim — fully adapt for the new format\n3. Optimize for the target platform's native style\n4. Adjust depth, length, and tone for the new medium\n5. The output should feel original, not like a re-hash"
+    }
+  },
+
+  "prompt_templates": {
+    "blog_post": {
+      "id": "blog_post",
+      "name": "Blog Post Generator",
+      "system_prompt_id": "content_writer",
+      "category": "long_form",
+      "system_variables": {
+        "content_type": "blog post"
       },
-      "content_generation": {
-        "id": "content_generation",
-        "role": "system",
-        "template": "You are Uplora AI, an expert {content_type} writer.\n\nSTRICT RULES:\n- Write in {language} language\n- Tone must be: {tone}\n- Target audience: {target_audience}\n- Content length: {length_guide}\n- Include these keywords naturally (never force): {keywords}\n- Platform optimized for: {platform}\n- DO NOT write meta-commentary like 'Here is your blog post...'\n- DO NOT include placeholders like [Your Name]\n- Write complete, publication-ready content\n- Use active voice (80%+ of sentences)\n- Vary sentence length for rhythm\n- Every paragraph must add unique value",
-        "variables": ["content_type", "language", "tone", "target_audience", "length_guide", "keywords", "platform"]
-      },
-      "seo_expert": {
-        "id": "seo_expert",
-        "role": "system",
-        "content": "You are Uplora SEO AI, an expert in technical SEO, content optimization, and search engine algorithms (Google, Bing). You analyze content against the latest ranking factors including E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness). You provide actionable, specific recommendations — never vague advice. Always respond with valid JSON only, no markdown code blocks.",
-        "response_format": "json_only"
-      },
-      "social_expert": {
-        "id": "social_expert",
-        "role": "system",
-        "content": "You are Uplora Social AI, an expert in social media strategy across Twitter/X, LinkedIn, Instagram, Facebook, TikTok, YouTube, Pinterest, and Reddit. You understand platform algorithms, optimal posting times, hashtag strategies, and viral content patterns. You write platform-native content that feels authentic, not like marketing copy.",
-        "platform_limits": {
-          "twitter": 280,
-          "linkedin": 3000,
-          "instagram": 2200,
-          "facebook": 63206,
-          "tiktok": 2200,
-          "youtube_description": 5000,
-          "pinterest": 500,
-          "reddit_title": 300
+      "user_prompt": "Write a {tone} blog post about:\n\nTOPIC: {topic}\nFOCUS KEYWORD: {focus_keyword}\nSECONDARY KEYWORDS: {secondary_keywords}\nWORD COUNT: {word_count}\nAUDIENCE LEVEL: {audience_level}\n\nREQUIRED STRUCTURE:\n1. Hook intro (80-150 words) — Start with a compelling statistic, story, or bold claim. Include focus keyword naturally. Promise clear value.\n2. Table of Contents (if 800+ words)\n3. {section_count} main sections with H2 headings — each 150-300 words with examples\n4. Practical tips or actionable steps within each section\n5. Conclusion (80-120 words) — summarize key points, include CTA\n\nSEO REQUIREMENTS:\n- Focus keyword in: title, first paragraph, at least 2 H2 headings, conclusion\n- Secondary keywords: use once each naturally\n- Keyword density: 1-3% for focus keyword\n\nFORBIDDEN PHRASES: 'In today's world', 'In conclusion', 'It goes without saying', 'As we all know', 'Without further ado'",
+      "length_options": {
+        "short": {
+          "words": "600-900",
+          "sections": 3,
+          "depth": "overview",
+          "section_count": "3"
+        },
+        "medium": {
+          "words": "1200-1800",
+          "sections": 5,
+          "depth": "comprehensive",
+          "section_count": "5"
+        },
+        "long": {
+          "words": "2500-4000",
+          "sections": 7,
+          "depth": "definitive guide",
+          "section_count": "7"
+        },
+        "pillar": {
+          "words": "5000-8000",
+          "sections": 10,
+          "depth": "ultimate resource",
+          "section_count": "10"
         }
       },
-      "analytics_expert": {
-        "id": "analytics_expert",
-        "role": "system",
-        "content": "You are Uplora Analytics AI. You analyze content performance data and provide strategic insights. You identify patterns, predict trends, and give specific actionable recommendations to improve content ROI. Always respond with valid JSON only.",
-        "response_format": "json_only"
+      "default_variables": {
+        "tone": "professional",
+        "language": "English",
+        "target_audience": "general audience",
+        "platform": "blog",
+        "keywords": "none specified",
+        "focus_keyword": "",
+        "secondary_keywords": "none",
+        "word_count": "1200-1800 words",
+        "audience_level": "intermediate",
+        "section_count": "5"
       }
     },
-    "prompt_templates": {
-      "blog_post": {
-        "id": "blog_post",
-        "name": "Blog Post Generator",
-        "system_prompt_id": "content_generation",
-        "user_prompt_template": "Write a {tone} blog post about: {topic}\n\nRequired sections:\n{sections}\n\nFocus keyword (use in title, first paragraph, 2-3 headings, conclusion): {focus_keyword}\nSecondary keywords (sprinkle naturally): {secondary_keywords}\nWord count target: {word_count_target}\n\nExtra context: {extra_context}",
-        "length_options": {
-          "short": { "words": "600-900", "sections": 3, "depth": "overview" },
-          "medium": { "words": "1200-1800", "sections": 5, "depth": "comprehensive" },
-          "long": { "words": "2500-4000", "sections": 7, "depth": "definitive guide" },
-          "pillar": { "words": "5000-8000", "sections": 10, "depth": "ultimate resource" }
-        }
-      },
-      "social_post": {
-        "id": "social_post",
-        "name": "Social Post Generator",
-        "system_prompt_id": "social_expert",
-        "platforms": {
-          "twitter": {
-            "format": "single_tweet",
-            "max_chars": 280,
-            "user_prompt": "Write a Twitter/X post about: {topic}\nTone: {tone}\nInclude: {include_elements}\nChar limit: 280\nNo hashtags in body (add 1-2 at end only)\nFirst 5 words must stop the scroll"
-          },
-          "twitter_thread": {
-            "format": "numbered_thread",
-            "min_tweets": 8,
-            "max_tweets": 15,
-            "user_prompt": "Write a Twitter/X thread ({min_tweets}-{max_tweets} tweets) about: {topic}\nTone: {tone}\n\nFormat each tweet as:\n🧵 1/{total} [hook tweet — makes them NEED to read more]\n2/{total} [first insight]\n...\n{total}/{total} [summary + CTA]\n\nEach tweet: standalone value, under 280 chars, 1-2 hashtags MAX"
-          },
-          "linkedin": {
-            "format": "professional_post",
-            "optimal_chars": "1300",
-            "user_prompt": "Write a LinkedIn post about: {topic}\nTone: Professional but human\nAudience: {target_audience}\n\nStructure:\nLine 1: Bold opening that earns the 'see more' click (NO questions)\nLines 2-4: Empty line then personal story or data point\nLines 5-12: Main insight broken into short paragraphs (1-2 lines each)\nFinal lines: Key takeaway + question to drive comments\nEnd: 3-5 relevant hashtags"
-          },
-          "instagram": {
-            "format": "caption_with_hashtags",
-            "caption_chars": "150-300",
-            "hashtag_count": "20-30",
-            "user_prompt": "Write an Instagram caption for a post about: {topic}\nVisual context: {visual_description}\nTone: {tone}\nBrand voice: {brand_voice}"
-          }
-        }
-      },
-      "email": {
-        "id": "email",
-        "name": "Email Campaign Generator",
-        "system_prompt_id": "content_generation",
-        "types": {
-          "newsletter": {
-            "user_prompt": "Write an email newsletter:\nTopic: {topic}\nBrand: {brand_name}\nTone: {tone}\nSubscriber segment: {segment}"
-          },
-          "cold_outreach": {
-            "user_prompt": "Write a cold outreach email:\nSender: {sender_role} at {company}\nRecipient: {recipient_role} at {prospect_company}\nGoal: {goal}\nValue prop: {value_proposition}"
-          },
-          "promotional": {
-            "user_prompt": "Write a promotional email:\nProduct/Offer: {offer}\nDiscount: {discount}\nDeadline: {deadline}\nAudience: {audience}"
-          }
-        }
-      },
-      "video_script": {
-        "id": "video_script",
-        "name": "Video Script Generator",
-        "system_prompt_id": "content_generation",
-        "formats": {
-          "youtube": {
-            "user_prompt": "Write a YouTube video script:\nTopic: {topic}\nChannel style: {channel_style}\nTarget length: {video_length} minutes\nAudience: {audience}"
-          },
-          "short_form": {
-            "user_prompt": "Write a short-form video script (TikTok/Reels/Shorts):\nTopic: {topic}\nTarget length: {seconds} seconds\nHook type: {hook_type}"
-          }
-        }
-      },
-      "ad_copy": {
-        "id": "ad_copy",
-        "name": "Advertising Copy Generator",
-        "system_prompt_id": "content_generation",
-        "formats": {
-          "google_search": {
-            "user_prompt": "Write Google Search Ad copy:\nProduct/Service: {product}\nUSP: {usp}\nKeyword theme: {keyword}\nLanding page goal: {goal}"
-          },
-          "facebook_ads": {
-            "user_prompt": "Write Facebook/Instagram Ad copy:\nProduct: {product}\nAudience: {audience}\nObjective: {objective}\nOffer: {offer}\nBudget tier: {budget_tier}"
-          }
-        }
-      },
-      "repurpose": {
-        "id": "repurpose",
-        "name": "Content Repurposing Engine",
-        "user_prompt": "You are a content repurposing expert. Transform the following {source_type} into {target_type}.\n\nSource Content:\n{source_content}\n\nTarget Platform/Format: {target_type}\nTarget Audience: {target_audience}\nTone shift if needed: {tone_shift}"
-      },
-      "seo_analysis": {
-        "id": "seo_analysis",
-        "name": "SEO Content Analyzer",
-        "system_prompt_id": "seo_expert",
-        "user_prompt": "Analyze this content for SEO optimization:\n\nFOCUS KEYWORD: {focus_keyword}\nSECONDARY KEYWORDS: {secondary_keywords}\nTARGET URL SLUG: {url_slug}\nCONTENT TYPE: {content_type}\nWORD COUNT: {word_count}\n\nCONTENT TO ANALYZE:\n{content}"
-      },
-      "content_strategy": {
-        "id": "content_strategy",
-        "name": "Content Strategy Planner",
-        "system_prompt_id": "analytics_expert",
-        "user_prompt": "Create a content strategy for:\nBusiness: {business_name}\nIndustry: {industry}\nGoal: {primary_goal}\nTarget Audience: {target_audience}\nPlatforms: {platforms}\nPosting Frequency: {frequency}\nTimeframe: {timeframe}"
-      },
-      "hashtag_research": {
-        "id": "hashtag_research",
-        "name": "Hashtag Research Engine",
-        "user_prompt": "Research and generate hashtags for:\nTopic: {topic}\nPlatform: {platform}\nNiche: {niche}\nAccount size: {account_size}"
-      },
-      "title_generator": {
-        "id": "title_generator",
-        "name": "Headline & Title Generator",
-        "user_prompt": "Generate {count} high-converting titles for:\nTopic: {topic}\nContent Type: {content_type}\nFocus Keyword: {focus_keyword}\nTarget Audience: {target_audience}\nGoal: {goal}"
-      },
-      "content_brief": {
-        "id": "content_brief",
-        "name": "Content Brief Generator",
-        "user_prompt": "Create a detailed content brief:\nTopic: {topic}\nContent Type: {content_type}\nTarget Keyword: {target_keyword}\nCompetitor URLs to beat: {competitor_urls}\nTarget Word Count: {word_count}\nAudience Level: {audience_level}"
+
+    "twitter_post": {
+      "id": "twitter_post",
+      "name": "Twitter/X Single Post",
+      "system_prompt_id": "social_strategist",
+      "category": "social",
+      "user_prompt": "Write a Twitter/X post about: {topic}\n\nTONE: {tone}\nGOAL: {goal}\nINCLUDE: {include_elements}\n\nRULES:\n- Maximum 280 characters (STRICT — count carefully)\n- First 5 words must stop the scroll — create immediate curiosity or value\n- No more than 2 hashtags, placed at the end only\n- End with a hook, question, or statement that drives replies\n- No thread format — single tweet only\n\nHOOK FORMULAS TO USE:\n- 'Hot take: {claim}'\n- 'After {timeframe} of {experience}: {insight}'\n- '{Number} things nobody tells you about {topic}:'\n- 'Unpopular opinion: {opinion}'\n- 'The real reason {common_belief_debunked}'\n\nReturn ONLY the tweet text — nothing else.",
+      "character_limit": 280,
+      "default_variables": {
+        "tone": "casual",
+        "goal": "engagement",
+        "include_elements": "none",
+        "platform": "twitter",
+        "language": "English",
+        "target_audience": "general",
+        "length_guide": "max 280 characters",
+        "keywords": ""
       }
     },
-    "response_validators": {
-      "json_validator": {
-        "description": "Validates AI returns proper JSON",
-        "extraction_regex": "\\{[\\s\\S]*\\}",
-        "fallback": "return_error_object"
-      },
-      "content_validator": {
-        "min_word_count": 50,
-        "check_for_placeholders": ["[Your Name]", "[Company]", "[Link]", "INSERT"],
-        "check_for_meta_commentary": ["Here is", "I have written", "Below is", "As requested"],
-        "retry_if_invalid": true,
-        "max_retries": 2
+
+    "twitter_thread": {
+      "id": "twitter_thread",
+      "name": "Twitter/X Thread",
+      "system_prompt_id": "social_strategist",
+      "category": "social",
+      "user_prompt": "Write a Twitter/X thread about: {topic}\n\nTHREAD LENGTH: {thread_length} tweets\nTONE: {tone}\nGOAL: {goal}\nAUDIENCE: {target_audience}\n\nFORMAT EACH TWEET EXACTLY AS:\n🧵 1/{total} [Hook tweet — makes people NEED to read more. Bold claim or shocking insight. Max 250 chars]\n\n2/{total} [First insight with specific detail. Max 270 chars]\n\n3/{total} [Continue story/data. Each tweet standalone but connected. Max 270 chars]\n\n[Continue pattern...]\n\n{total}/{total} [Summary of key insights + strong CTA. Retweet ask if appropriate. Max 270 chars]\n\nRULES:\n- Every tweet max 280 chars\n- Each tweet must be valuable standalone\n- No filler tweets — if a point isn't worth a tweet, combine it\n- Number format: X/{total} at start of each tweet\n- Last tweet: summary + CTA\n- Thread should tell a complete story",
+      "default_variables": {
+        "thread_length": "10",
+        "total": "10",
+        "tone": "educational",
+        "goal": "brand authority",
+        "target_audience": "professionals",
+        "platform": "twitter",
+        "language": "English",
+        "length_guide": "10 tweets",
+        "keywords": ""
+      }
+    },
+
+    "linkedin_post": {
+      "id": "linkedin_post",
+      "name": "LinkedIn Post",
+      "system_prompt_id": "social_strategist",
+      "category": "social",
+      "user_prompt": "Write a LinkedIn post about: {topic}\n\nAUDIENCE: {target_audience}\nGOAL: {goal}\nTONE: Professional but human (never corporate-speak)\nPERSONAL ANGLE: {personal_angle}\n\nSTRUCTURE (REQUIRED):\nLine 1: Bold opening statement — must earn the 'see more' click. NOT a question. A declaration, data point, or counterintuitive insight.\n[blank line]\nLines 2-4: Brief context or personal story (2-3 short lines, 1 sentence each)\n[blank line]\nLines 5-15: Core content — break into SHORT paragraphs (1-3 lines max each). Use line breaks generously.\n[blank line]\nFinal paragraph: Key takeaway + question to drive comments\n[blank line]\n3-5 relevant hashtags\n\nCHARACTER TARGET: 1000-1300 characters\n\nNEVER USE:\n- 'I am pleased to announce'\n- 'Excited to share'\n- 'Humbled and honored'\n- 'Synergy', 'leverage', 'pivot', 'bandwidth'\n- Generic advice without personal experience\n\nReturn ONLY the post text — no explanations.",
+      "character_target": 1300,
+      "character_limit": 3000,
+      "default_variables": {
+        "tone": "professional",
+        "goal": "thought leadership",
+        "personal_angle": "professional experience",
+        "target_audience": "business professionals",
+        "platform": "linkedin",
+        "language": "English",
+        "length_guide": "1000-1300 characters",
+        "keywords": ""
+      }
+    },
+
+    "instagram_caption": {
+      "id": "instagram_caption",
+      "name": "Instagram Caption",
+      "system_prompt_id": "social_strategist",
+      "category": "social",
+      "user_prompt": "Write an Instagram caption for: {topic}\n\nVISUAL CONTEXT: {visual_description}\nBRAND VOICE: {brand_voice}\nTONE: {tone}\nGOAL: {goal}\nACCOUNT NICHE: {niche}\n\nSTRUCTURE:\nLine 1: Hook (create curiosity, emotion, or relatability — max 125 chars so it shows before 'more')\n[blank line]\nLines 2-5: Story, value, or insight (conversational, 3-4 short paragraphs)\nLine 6: Clear CTA (save this, share with someone who needs this, comment below, link in bio)\n[blank line — acts as visual separator from hashtags]\n.\n.\n.\n{hashtag_count} HASHTAGS:\nFormat: Mix of sizes\n- 5 large (1M+ posts): #contentmarketing #marketing\n- 10 medium (100K-1M): #contentcreator #digitalmarketing  \n- 10 niche (<100K): specific to your exact topic\n\nRETURN: Caption text then hashtags. Total caption max 2200 chars.",
+      "default_variables": {
+        "tone": "engaging",
+        "goal": "engagement",
+        "brand_voice": "authentic and relatable",
+        "niche": "general",
+        "hashtag_count": "25",
+        "visual_description": "lifestyle image",
+        "platform": "instagram",
+        "language": "English",
+        "length_guide": "150-300 words caption",
+        "keywords": "",
+        "target_audience": "Instagram users"
+      }
+    },
+
+    "facebook_post": {
+      "id": "facebook_post",
+      "name": "Facebook Post",
+      "system_prompt_id": "social_strategist",
+      "category": "social",
+      "user_prompt": "Write a Facebook post about: {topic}\n\nPAGE TYPE: {page_type}\nAUDIENCE: {target_audience}\nTONE: {tone}\nGOAL: {goal}\n\nFORMAT:\n- Opening line: Question or bold statement (40-80 chars optimal)\n- Body: 2-3 short paragraphs, conversational tone\n- End with: Question to drive comments OR clear CTA\n- Optional: Poll question if goal is engagement\n\nBEST PERFORMING FORMATS ON FACEBOOK:\n1. Story post: Personal story → lesson → question\n2. List post: '5 reasons why...' format\n3. Timely post: Connect to trending topic\n4. Question post: Open-ended question relevant to audience\n\nUSE FORMAT: {post_format}\n\nReturn ONLY the post text.",
+      "default_variables": {
+        "tone": "friendly",
+        "goal": "engagement",
+        "page_type": "business page",
+        "post_format": "story post",
+        "target_audience": "Facebook users",
+        "platform": "facebook",
+        "language": "English",
+        "length_guide": "40-200 words",
+        "keywords": ""
+      }
+    },
+
+    "tiktok_script": {
+      "id": "tiktok_script",
+      "name": "TikTok Video Script",
+      "system_prompt_id": "social_strategist",
+      "category": "social",
+      "user_prompt": "Write a TikTok video script about: {topic}\n\nVIDEO LENGTH: {video_length} seconds\nHOOK TYPE: {hook_type}\nTARGET: {target_audience}\nTRENDS TO USE: {trends}\n\nSCRIPT FORMAT:\n[0-3 SEC HOOK — Make viewer STOP scrolling]\nHook line: \"{hook_text}\"\nVisual direction: [describe what should be on screen]\n\n[3-{mid_point} SEC CONTENT]\nMain point 1: [text, max 10 words on screen]\nMain point 2: [text, max 10 words on screen]\nMain point 3: [text, max 10 words on screen]\n\n[{mid_point}-{end_time} SEC PAYOFF]\nBig reveal or value delivery\n\n[Last 3 SEC CTA]\nCTA: [Follow for more / Comment X / Save this]\n\nSPEAKING SCRIPT:\n{full_spoken_script}\n\nCAPTION (max 150 chars + 5-8 hashtags):\n{caption_text}\n\nWORDS SPOKEN: Calculate at 150 words/minute × {video_length} seconds ÷ 60",
+      "default_variables": {
+        "video_length": "60",
+        "hook_type": "question",
+        "target_audience": "Gen Z and Millennials",
+        "trends": "none specified",
+        "mid_point": "30",
+        "end_time": "57",
+        "hook_text": "Nobody tells you this about {topic}",
+        "full_spoken_script": "",
+        "caption_text": "",
+        "platform": "tiktok",
+        "language": "English",
+        "length_guide": "60 second script",
+        "keywords": "",
+        "tone": "energetic"
+      }
+    },
+
+    "email_newsletter": {
+      "id": "email_newsletter",
+      "name": "Email Newsletter",
+      "system_prompt_id": "content_writer",
+      "category": "email",
+      "user_prompt": "Write an email newsletter:\n\nBRAND: {brand_name}\nTOPIC: {topic}\nSUBSCRIBER SEGMENT: {segment}\nTONE: {tone}\nGOAL: {goal}\n\nREQUIRED SECTIONS (use these EXACT labels):\n\nSUBJECT: [Max 50 chars. Curiosity-driven or benefit-driven. No spam words: free, guaranteed, click here, buy now, limited time, winner]\n\nPREVIEW: [Max 90 chars. Complements subject, adds intrigue, doesn't repeat it]\n\nGREETING: [Warm, personalized tone. Use {{first_name}} placeholder]\n\nINTRO: [2-3 lines. Why this email matters TODAY. Create urgency or relevance]\n\nMAIN CONTENT:\n[Core value — 200-400 words. Use subheadings. Scannable format. Short paragraphs]\n\nKEY TAKEAWAY: [1-2 sentences. The ONE thing they should remember]\n\nCTA: [{cta_text} — benefit-focused, action verb, max 5 words]\n\nP.S.: [1 sentence. Often the most-read section. Use for second CTA, bonus tip, or personal note]",
+      "default_variables": {
+        "content_type": "email newsletter",
+        "platform": "email",
+        "language": "English",
+        "target_audience": "email subscribers",
+        "length_guide": "300-500 words",
+        "tone": "friendly professional",
+        "goal": "engagement and value delivery",
+        "brand_name": "your brand",
+        "segment": "general subscribers",
+        "cta_text": "Read more",
+        "keywords": ""
+      }
+    },
+
+    "email_cold_outreach": {
+      "id": "email_cold_outreach",
+      "name": "Cold Outreach Email",
+      "system_prompt_id": "content_writer",
+      "category": "email",
+      "user_prompt": "Write a cold outreach email:\n\nFROM: {sender_name}, {sender_role} at {sender_company}\nTO: {recipient_role} at {prospect_company}\nGOAL: {goal}\nVALUE PROPOSITION: {value_prop}\nSPECIFIC HOOK: {personalization_hook}\n\nSTRUCTURE (AIDA — max 150 words total):\n\nSUBJECT: [Personalized, specific, <40 chars — reference their company, role, or recent news]\n\nLINE 1 — ATTENTION: [Their specific pain point or observation about their company. NOT 'I hope this finds you well']\n\nLINE 2-3 — INTEREST: [Your relevant capability. One proof point. Specific, not vague]\n\nLINE 4 — DESIRE: [One result you delivered for a similar company. Quantified if possible]\n\nLINE 5 — ACTION: [Soft CTA — a simple yes/no question or calendar link. Not 'Would you be open to a 30 minute call?']\n\nSIGNATURE: [{sender_name} | {sender_role} | {sender_company}]\n\nFORBIDDEN:\n- 'I hope this email finds you well'\n- 'I wanted to reach out'\n- 'We help companies like yours'\n- Long paragraphs\n- Multiple CTAs",
+      "default_variables": {
+        "content_type": "cold outreach email",
+        "platform": "email",
+        "language": "English",
+        "target_audience": "decision maker",
+        "length_guide": "under 150 words",
+        "tone": "professional direct",
+        "goal": "book a discovery call",
+        "keywords": "",
+        "sender_name": "Account Manager",
+        "sender_role": "Specialist",
+        "sender_company": "Uplora",
+        "recipient_role": "Director",
+        "prospect_company": "Target Inc",
+        "value_prop": "boost engagement",
+        "personalization_hook": "recent growth"
+      }
+    },
+
+    "video_script_youtube": {
+      "id": "video_script_youtube",
+      "name": "YouTube Video Script",
+      "system_prompt_id": "content_writer",
+      "category": "video",
+      "user_prompt": "Write a YouTube video script:\n\nTOPIC: {topic}\nCHANNEL STYLE: {channel_style}\nVIDEO LENGTH: {video_length} minutes\nAUDIENCE: {target_audience}\nVIDEO GOAL: {video_goal}\n\nSCRIPT FORMAT:\n\n[HOOK — 0:00-0:30]\n{hook_style} opener. DO NOT start with 'Hey guys', 'Welcome back', or 'In today's video'. Open MID-STORY or with a bold claim.\n(B-roll suggestion: {broll_hook})\n\n[INTRO — 0:30-1:00]\nBrief credibility + promise of value + \"by the end of this video you'll know exactly how to {outcome}\"\n\n[MAIN CONTENT]\nSection 1: {section_1} [Timestamp: 1:00]\n- Key point\n- Example or story\n- Takeaway\n(B-roll: {broll_1})\n\nSection 2: {section_2} [Timestamp: {ts_2}]\n[Same format]\n\nSection 3: {section_3} [Timestamp: {ts_3}]\n[Same format]\n\n[OUTRO — Last 0:45]\n- 3-point recap\n- Like and subscribe ask with REASON (not just 'hit subscribe')\n- Next video teaser: 'Next week I'm covering {next_topic}'\n- End screen callout\n\n[Director Notes]\n{director_notes}\n\nTotal spoken words: {video_length} min × 150 words/min = {word_count} words",
+      "default_variables": {
+        "content_type": "YouTube video script",
+        "platform": "youtube",
+        "language": "English",
+        "target_audience": "YouTube viewers",
+        "length_guide": "script for 10 minute video",
+        "tone": "engaging educational",
+        "channel_style": "educational",
+        "video_length": "10",
+        "video_goal": "educate and grow channel",
+        "hook_style": "story",
+        "broll_hook": "relevant visual",
+        "section_1": "Introduction to topic",
+        "section_2": "Core concepts",
+        "section_3": "Practical application",
+        "ts_2": "4:00",
+        "ts_3": "7:00",
+        "broll_1": "supporting visuals",
+        "next_topic": "related topic",
+        "director_notes": "energetic and clear pacing",
+        "word_count": "1500",
+        "keywords": "",
+        "outcome": "master this topic"
+      }
+    },
+
+    "ad_copy_google": {
+      "id": "ad_copy_google",
+      "name": "Google Search Ad Copy",
+      "system_prompt_id": "content_writer",
+      "category": "advertising",
+      "user_prompt": "Write Google Search Ad copy:\n\nPRODUCT/SERVICE: {product}\nUSP (Unique Selling Point): {usp}\nPRIMARY KEYWORD: {keyword}\nLANDING PAGE GOAL: {goal}\nCOMPETITIVE ADVANTAGE: {advantage}\n\nProvide 3 complete ad variations for A/B testing:\n\nAD VARIATION 1 — BENEFIT-LED:\nH1: [max 30 chars — include keyword]\nH2: [max 30 chars — primary benefit]\nH3: [max 30 chars — social proof or CTA]\nD1: [max 90 chars — expand on benefit with specifics]\nD2: [max 90 chars — CTA + urgency or guarantee]\n\nAD VARIATION 2 — PROBLEM/SOLUTION:\nH1: [max 30 chars]\nH2: [max 30 chars]\nH3: [max 30 chars]\nD1: [max 90 chars]\nD2: [max 90 chars]\n\nAD VARIATION 3 — SOCIAL PROOF + URGENCY:\nH1: [max 30 chars]\nH2: [max 30 chars]\nH3: [max 30 chars]\nD1: [max 90 chars]\nD2: [max 90 chars]\n\nDISPLAY URL: {base_url}/{keyword_path}\n\nCHAR COUNT VERIFICATION: [List character count for each element]\n\nFORBIDDEN: Exclamation marks in H1, trademark symbols unless owned, competitor names",
+      "default_variables": {
+        "content_type": "Google ad copy",
+        "platform": "google",
+        "language": "English",
+        "target_audience": "search intent users",
+        "length_guide": "30 chars headlines, 90 chars descriptions",
+        "tone": "persuasive direct",
+        "keywords": "",
+        "product": "Content Tool",
+        "usp": "Fast AI content creation",
+        "keyword": "content engine",
+        "goal": "signups",
+        "advantage": "all-in-one platform",
+        "base_url": "yoursite.com",
+        "keyword_path": "solution"
+      }
+    },
+
+    "ad_copy_social": {
+      "id": "ad_copy_social",
+      "name": "Social Media Ad Copy",
+      "system_prompt_id": "content_writer",
+      "category": "advertising",
+      "user_prompt": "Write social media ad copy for {platform}:\n\nPRODUCT/SERVICE: {product}\nAUDIENCE: {target_audience}\nOBJECTIVE: {objective}\nOFFER: {offer}\nPSYCHOLOGY TRIGGERS: {psychology_triggers}\n\nDeliver 3 variations:\n\nVARIATION A — STORY ANGLE:\nPrimary Text (125 chars): [Open with relatable scenario]\nHeadline (27 chars): [Benefit + value]\nDescription (27 chars): [Reinforce with urgency]\nCTA Button: {cta_button}\n\nVARIATION B — PROBLEM/AGITATE/SOLVE:\nPrimary Text (125 chars): [Name pain → twist knife → offer solution]\nHeadline (27 chars): [Solution-focused]\nDescription (27 chars): [Quantified result]\nCTA Button: {cta_button}\n\nVARIATION C — SOCIAL PROOF:\nPrimary Text (125 chars): ['X people have already...' or customer-voice style]\nHeadline (27 chars): [Result-focused]\nDescription (27 chars): [Trust signal]\nCTA Button: {cta_button}\n\nVIDEO HOOK SCRIPT (first 3 seconds): [For video ads — make it impossible to scroll past]\n\nCHAR COUNT VERIFICATION: [Verify each element]",
+      "default_variables": {
+        "content_type": "social media ad copy",
+        "platform": "facebook",
+        "language": "English",
+        "target_audience": "warm audience",
+        "length_guide": "125 chars primary text",
+        "tone": "persuasive",
+        "product": "Content Suite",
+        "objective": "conversions",
+        "offer": "free trial",
+        "psychology_triggers": "scarcity, social proof",
+        "cta_button": "Learn More",
+        "keywords": ""
+      }
+    },
+
+    "content_repurpose": {
+      "id": "content_repurpose",
+      "name": "Content Repurposing",
+      "system_prompt_id": "repurposing_expert",
+      "category": "repurposing",
+      "user_prompt": "Transform the following {source_type} into {target_type}.\n\nSOURCE CONTENT:\n{source_content}\n\nTARGET FORMAT: {target_type}\nTARGET PLATFORM: {target_platform}\nTARGET AUDIENCE: {target_audience}\nTONE ADJUSTMENT: {tone_shift}\n\nPLATFORM REQUIREMENTS FOR {target_type}:\n{platform_requirements}\n\nCONVERSION RULES:\n1. Preserve ALL key insights and core message\n2. Completely rewrite for the new format — no verbatim copying\n3. Adjust depth: condense for short formats, expand for long formats\n4. Optimize structure for platform (headers for blog, emojis for social, etc.)\n5. The output must feel original and native to {target_platform}\n\nReturn ONLY the repurposed content in the target format.",
+      "default_variables": {
+        "source_type": "blog post",
+        "target_type": "social thread",
+        "target_platform": "twitter",
+        "source_content": "",
+        "language": "English",
+        "target_audience": "same as original",
+        "tone_shift": "maintain original tone",
+        "platform_requirements": "adapt appropriately",
+        "keywords": ""
+      }
+    },
+
+    "seo_analysis": {
+      "id": "seo_analysis",
+      "name": "SEO Content Analysis",
+      "system_prompt_id": "seo_analyst",
+      "category": "analysis",
+      "user_prompt": "Perform a complete SEO analysis on this content.\n\nFOCUS KEYWORD: \"{focus_keyword}\"\nSECONDARY KEYWORDS: {secondary_keywords}\nCONTENT TYPE: {content_type}\nTARGET URL SLUG: {url_slug}\nWORD COUNT: {word_count}\n\nCONTENT:\n{content}\n\nReturn ONLY this JSON structure (no markdown, no explanation):\n{\n  \"overall_score\": 85,\n  \"grade\": \"B\",\n  \"title_analysis\": {\n    \"current\": \"Title\",\n    \"optimized\": \"SEO Title\",\n    \"has_keyword\": true,\n    \"char_count\": 50,\n    \"score\": 18\n  },\n  \"meta_description\": {\n    \"optimized\": \"Meta description\",\n    \"char_count\": 145,\n    \"includes_keyword\": true,\n    \"score\": 9\n  },\n  \"keyword_analysis\": {\n    \"primary_keyword_count\": 5,\n    \"density\": 1.5,\n    \"optimal_density_range\": \"1-3%\",\n    \"in_first_paragraph\": true,\n    \"in_conclusion\": true,\n    \"in_headings_count\": 2,\n    \"score\": 18\n  },\n  \"content_quality\": {\n    \"word_count\": 1200,\n    \"readability_score\": 75,\n    \"readability_level\": \"Intermediate\",\n    \"flesch_kincaid_score\": 65.0,\n    \"avg_sentence_length\": 14.2,\n    \"paragraphs_count\": 12,\n    \"score\": 18\n  },\n  \"structure_analysis\": {\n    \"h1_count\": 1,\n    \"h2_count\": 4,\n    \"h3_count\": 2,\n    \"has_intro\": true,\n    \"has_conclusion\": true,\n    \"has_table_of_contents\": true,\n    \"estimated_internal_links\": 3,\n    \"estimated_external_links\": 2,\n    \"score\": 18\n  },\n  \"issues\": [],\n  \"opportunities\": [],\n  \"recommended_schema_type\": \"Article\",\n  \"lsi_keywords\": [],\n  \"internal_link_suggestions\": [],\n  \"competing_keywords\": []\n}",
+      "default_variables": {
+        "focus_keyword": "content engine",
+        "secondary_keywords": "none specified",
+        "content_type": "blog post",
+        "url_slug": "auto-generated",
+        "word_count": "1200",
+        "content": ""
+      }
+    },
+
+    "title_generator": {
+      "id": "title_generator",
+      "name": "Title & Headline Generator",
+      "system_prompt_id": "content_writer",
+      "category": "ideation",
+      "user_prompt": "Generate {count} high-converting titles/headlines for:\n\nTOPIC: {topic}\nCONTENT TYPE: {content_type}\nFOCUS KEYWORD: {focus_keyword}\nTARGET AUDIENCE: {target_audience}\nTONE: {tone}\nGOAL: {goal}",
+      "default_variables": {
+        "count": "5",
+        "topic": "Growth Marketing",
+        "focus_keyword": "Marketing",
+        "tone": "professional",
+        "goal": "drive clicks and engagement",
+        "content_type": "blog post",
+        "target_audience": "general audience",
+        "language": "English",
+        "length_guide": "titles only",
+        "platform": "general",
+        "keywords": ""
+      }
+    },
+
+    "hashtag_generator": {
+      "id": "hashtag_generator",
+      "name": "Hashtag Research Generator",
+      "system_prompt_id": "social_strategist",
+      "category": "ideation",
+      "user_prompt": "Research and generate a hashtag strategy for:\n\nTOPIC: {topic}\nPLATFORM: {platform}\nNICHE: {niche}\nACCOUNT SIZE: {account_size}\nCONTENT SUMMARY: {content_summary}",
+      "default_variables": {
+        "topic": "Social Media",
+        "niche": "general",
+        "account_size": "medium (1K-50K followers)",
+        "content_summary": "general content",
+        "platform": "instagram",
+        "language": "English",
+        "length_guide": "hashtags only",
+        "target_audience": "target audience",
+        "keywords": "",
+        "tone": "professional"
+      }
+    },
+
+    "content_brief": {
+      "id": "content_brief",
+      "name": "SEO Content Brief",
+      "system_prompt_id": "seo_analyst",
+      "category": "planning",
+      "user_prompt": "Create a detailed SEO content brief:\n\nTOPIC: {topic}\nTARGET KEYWORD: {target_keyword}\nCONTENT TYPE: {content_type}\nTARGET WORD COUNT: {word_count}\nAUDIENCE LEVEL: {audience_level}\nBUSINESS GOAL: {business_goal}",
+      "default_variables": {
+        "topic": "SEO Strategy",
+        "target_keyword": "SEO",
+        "content_type": "blog post",
+        "word_count": "1500",
+        "audience_level": "intermediate",
+        "business_goal": "organic traffic and lead generation",
+        "language": "English",
+        "platform": "blog",
+        "length_guide": "brief document",
+        "target_audience": "target audience",
+        "keywords": "",
+        "tone": "professional"
+      }
+    },
+
+    "content_strategy": {
+      "id": "content_strategy",
+      "name": "Content Strategy Planner",
+      "system_prompt_id": "analytics_ai",
+      "category": "planning",
+      "user_prompt": "Create a comprehensive content strategy:\n\nBUSINESS: {business_name}\nINDUSTRY: {industry}\nPRIMARY GOAL: {primary_goal}\nTARGET AUDIENCE: {target_audience}\nPLATFORMS: {platforms}\nCURRENT POSTING FREQUENCY: {current_frequency}\nTIMEFRAME: {timeframe}\nBUDGET LEVEL: {budget_level}\nCOMPETITORS: {competitors}",
+      "default_variables": {
+        "business_name": "My Company",
+        "industry": "Technology",
+        "primary_goal": "Brand Awareness",
+        "target_audience": "B2B Professionals",
+        "platforms": "LinkedIn, Twitter",
+        "current_frequency": "unknown",
+        "budget_level": "low",
+        "competitors": "none specified",
+        "timeframe": "90 days",
+        "language": "English",
+        "length_guide": "complete strategy document",
+        "keywords": "",
+        "tone": "strategic"
       }
     }
+  },
+
+  "response_validation": {
+    "content_rules": {
+      "min_word_count": 50,
+      "forbidden_openings": [
+        "Here is",
+        "Here's",
+        "I have written",
+        "I've written",
+        "Below is",
+        "Below you'll find",
+        "As requested",
+        "As an AI",
+        "I'm an AI",
+        "Certainly!",
+        "Of course!",
+        "Sure!"
+      ],
+      "forbidden_placeholders": [
+        "[Your Name]",
+        "[Company Name]",
+        "[Your Company]",
+        "[Add Link]",
+        "[Insert Link]",
+        "[Your Website]",
+        "[Date]",
+        "[Location]",
+        "INSERT HERE",
+        "PLACEHOLDER",
+        "TBD",
+        "TODO"
+      ],
+      "retry_on_violation": true,
+      "max_retries": 2,
+      "retry_instruction": "Your previous response violated the content rules. Rewrite without meta-commentary, placeholder text, or forbidden openings. Start directly with the content."
+    },
+    "json_rules": {
+      "extraction_pattern": "first_complete_json_object",
+      "fallback_on_parse_failure": true,
+      "validate_required_fields": true,
+      "sanitize_strings": true
+    }
+  },
+
+  "platform_requirements": {
+    "twitter": "Single tweet: max 280 chars. No hashtags in body — only 1-2 at end.",
+    "twitter_thread": "Each tweet max 280 chars. Number format: X/Y. Hook first, CTA last.",
+    "linkedin": "Professional tone. 1000-1300 chars optimal. Short paragraphs. 3-5 hashtags at end.",
+    "instagram": "Hook in first 125 chars (shows before 'more'). 25 hashtags. Clear CTA.",
+    "facebook": "40-80 chars for max reach. Conversational. Question or CTA at end.",
+    "tiktok": "Hook in first 3 seconds. Fast pacing. 5-8 hashtags. 150 char caption.",
+    "youtube": "Hook without 'hey guys'. Promise value in intro. 3-point recap outro.",
+    "newsletter": "Subject line + preview text required. Scannable format. Single CTA.",
+    "blog": "1500+ words for SEO. H2/H3 structure. Focus keyword in title and first paragraph.",
+    "google_ads": "H1-H3: 30 chars each. D1-D2: 90 chars each. Include keyword in H1.",
+    "facebook_ads": "Primary text: 125 chars. Headline: 27 chars. Description: 27 chars."
   }
 }
