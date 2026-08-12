@@ -18,6 +18,7 @@ import { CalendarModule } from './modules/calendar/calendar.module';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
 import { TemplatesModule } from './modules/templates/templates.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { RealtimeModule } from './modules/realtime/realtime.module';
 
 // Config
 import databaseConfig from './config/database.config';
@@ -60,7 +61,7 @@ import storageConfig from './config/storage.config';
           host: config.get<string>('redis.host'),
           port: config.get<number>('redis.port'),
         },
-      }),
+      } as any),
     }),
 
     ThrottlerModule.forRoot([
@@ -83,6 +84,7 @@ import storageConfig from './config/storage.config';
     WorkspaceModule,
     TemplatesModule,
     NotificationsModule,
+    RealtimeModule,
   ],
 })
 export class AppModule {}

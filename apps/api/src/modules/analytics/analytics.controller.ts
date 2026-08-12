@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AnalyticsService } from './analytics.service';
@@ -11,17 +11,23 @@ export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
   @Get('overview')
-  @ApiOperation({ summary: 'Get workspace level analytics overview and charts' })
-  async getOverview(@Query('timeframe') timeframe: string, @Req() req: any) {
-    return this.analyticsService.getOverviewMetrics(
-      req.user?.activeWorkspaceId || 'default-workspace',
-      timeframe,
-    );
+  @ApiOperation({ summary: 'Get workspace analytics overview metrics' })
+  async getOverview(
+    @Query('workspaceId') workspaceId: string = 'ws-default',
+    @Query('timeframe') timeframe: string = '30d',
+  ) {
+    return this.analyticsService.getOverviewMetrics(workspaceId, timeframe);
   }
 
   @Get('content/:id')
-  @ApiOperation({ summary: 'Get performance analytics for a specific content item' })
+  @ApiOperation({ summary: 'Get detailed performance metrics for a specific content item' })
   async getContentPerformance(@Param('id') contentId: string) {
     return this.analyticsService.getContentPerformance(contentId);
+  }
+
+  @Get('ai-summary')
+  @ApiOperation({ summary: 'Get AI cost savings and generation stats' })
+  async getAISummary(@Query('workspaceId') workspaceId: string = 'ws-default') {
+    return this.analyticsService.getAISummary(workspaceId);
   }
 }

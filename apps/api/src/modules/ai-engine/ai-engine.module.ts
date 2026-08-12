@@ -4,6 +4,7 @@ import { AIEngineService } from './ai-engine.service';
 import { AIEngineController } from './ai-engine.controller';
 import { PromptEngineService } from './prompt-engine.service';
 import { SchemaValidatorService } from './schema-validator.service';
+import { ImageGenerationService } from './image-generation.service';
 import { OpenAIProvider } from './providers/openai.provider';
 import { OllamaProvider } from './providers/ollama.provider';
 import { HuggingFaceProvider } from './providers/huggingface.provider';
@@ -15,10 +16,11 @@ import { HuggingFaceProvider } from './providers/huggingface.provider';
     AIEngineService,
     PromptEngineService,
     SchemaValidatorService,
+    ImageGenerationService,
     OpenAIProvider,
     OllamaProvider,
     HuggingFaceProvider,
   ],
-  exports: [AIEngineService, PromptEngineService, SchemaValidatorService],
+  exports: [AIEngineService, PromptEngineService, SchemaValidatorService, ImageGenerationService],
 })
 export class AIEngineModule {}

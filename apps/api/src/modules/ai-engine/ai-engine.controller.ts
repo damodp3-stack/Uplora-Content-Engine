@@ -12,6 +12,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AIEngineService, AIGenerationRequest } from './ai-engine.service';
 import { PromptEngineService } from './prompt-engine.service';
 import { SchemaValidatorService } from './schema-validator.service';
+import { ImageGenerationService, ImageGenerationRequest } from './image-generation.service';
 
 @ApiTags('AI Engine')
 @ApiBearerAuth()
@@ -22,6 +23,7 @@ export class AIEngineController {
     private readonly aiService: AIEngineService,
     private readonly promptEngine: PromptEngineService,
     private readonly schemaValidator: SchemaValidatorService,
+    private readonly imageService: ImageGenerationService,
   ) {}
 
   @Post('generate')
@@ -35,6 +37,15 @@ export class AIEngineController {
       });
     }
     return this.aiService.generateContent(request);
+  }
+
+  @Post('image-generate')
+  @ApiOperation({ summary: 'Generate AI visual thumbnails, OG banners, and social assets' })
+  async generateImage(@Body() request: ImageGenerationRequest) {
+    if (!request.prompt) {
+      throw new BadRequestException('prompt is required for image generation');
+    }
+    return this.imageService.generateImage(request);
   }
 
   @Post('seo-optimize')
