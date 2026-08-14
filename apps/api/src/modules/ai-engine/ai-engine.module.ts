@@ -8,6 +8,7 @@ import { SchemaValidatorService } from "./schema-validator.service";
 import { ImageGenerationService } from "./image-generation.service";
 import { EmbeddingService } from "./embedding.service";
 import { VectorStoreService } from "./vector-store.service";
+import { GeminiProvider } from "./providers/gemini.provider";
 import { OpenAIProvider } from "./providers/openai.provider";
 import { OllamaProvider } from "./providers/ollama.provider";
 import { HuggingFaceProvider } from "./providers/huggingface.provider";
@@ -27,6 +28,7 @@ import { KnowledgeDocument } from "./entities/knowledge-document.entity";
     ImageGenerationService,
     EmbeddingService,
     VectorStoreService,
+    GeminiProvider,
     OpenAIProvider,
     OllamaProvider,
     HuggingFaceProvider,
@@ -38,6 +40,10 @@ import { KnowledgeDocument } from "./entities/knowledge-document.entity";
     ImageGenerationService,
     EmbeddingService,
     VectorStoreService,
+    GeminiProvider,
+    OpenAIProvider,
+    OllamaProvider,
+    HuggingFaceProvider,
   ],
 })
 export class AIEngineModule {}

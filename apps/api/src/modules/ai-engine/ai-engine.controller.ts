@@ -29,6 +29,16 @@ export class AIEngineController {
     private readonly imageService: ImageGenerationService,
   ) {}
 
+  @Get("providers/status")
+  @ApiOperation({ summary: "Get AI provider health and connection statuses" })
+  async getProviderStatuses() {
+    const statuses = await this.aiService.getProviderStatuses();
+    return {
+      success: true,
+      data: statuses,
+    };
+  }
+
   @Post("generate")
   @ApiOperation({
     summary: "Generate content using prompt templates and AI provider failover",

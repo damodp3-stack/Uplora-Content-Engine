@@ -1,39 +1,45 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { CreativeConceptDTO } from "./creative-director.agent";
-
-export interface StrategyBlueprintDTO {
-  targetDurationSec: number;
-  hookType:
-    | "question"
-    | "surprising_stat"
-    | "bold_claim"
-    | "problem_first"
-    | "visual_pattern_interrupt";
-  hookText: string;
-  pacing: "fast" | "moderate" | "dramatic";
-  viralTriggers: string[];
-  ctaType: "comment" | "save" | "share" | "link_in_bio";
-  ctaText: string;
-}
+import { AIEngineService } from "../../ai-engine/ai-engine.service";
+import {
+  CreativeConceptDTO,
+  ResearchDTO,
+  StrategyBlueprintDTO,
+  StrategyBlueprintSchema,
+} from "../schemas/phase2-deliverables.schema";
+import { executeLLMAgent } from "./agent-llm-helper";
+import { STRATEGIST_PROMPT } from "../prompts/strategist.prompt";
 
 @Injectable()
 export class ContentStrategistAgent {
   private readonly logger = new Logger(ContentStrategistAgent.name);
 
+  constructor(private readonly aiEngine: AIEngineService) {}
+
   async buildStrategy(
     concept: CreativeConceptDTO,
-    targetDuration: number = 30,
+    research?: ResearchDTO,
   ): Promise<StrategyBlueprintDTO> {
-    this.logger.log(`Building content strategy for concept: ${concept.title}`);
+    this.logger.log(`Building dynamic Content Strategy for concept: "${concept.title}"`);
 
-    return {
-      targetDurationSec: targetDuration,
-      hookType: "surprising_stat",
-      hookText: `92% of buyers check your website before closing a deal. Here is why yours might be costing you millions.`,
-      pacing: "fast",
-      viralTriggers: ["FOMO", "High ROI proof", "Industry secret"],
-      ctaType: "link_in_bio",
-      ctaText: "Link in bio to calculate your digital ROI score today.",
-    };
+    const userPrompt = STRATEGIST_PROMPT.buildUserPrompt({
+      conceptTitle: concept.title,
+      objective: concept.objective,
+      persona: concept.targetAudience.persona,
+      painPoints: concept.targetAudience.painPoints,
+      duration: concept.duration,
+      platform: concept.platform,
+    });
+
+    const result = await executeLLMAgent<StrategyBlueprintDTO>(
+      this.aiEngine,
+      STRATEGIST_PROMPT.systemInstructions,
+      userPrompt,
+      StrategyBlueprintSchema,
+      this.logger,
+      ContentStrategistAgent.name,
+      STRATEGIST_PROMPT.version,
+    );
+
+    return result.data;
   }
 }

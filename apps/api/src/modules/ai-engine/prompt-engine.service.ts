@@ -89,6 +89,15 @@ export class PromptEngineService implements OnModuleInit {
     templateId: string,
     variables: Record<string, string> = {},
   ): BuildResult {
+    if (templateId === "raw" || templateId === "agent_json") {
+      return {
+        systemPrompt: variables.systemPrompt || "",
+        userPrompt: variables.prompt || variables.topic || "",
+        templateId,
+        missingVariables: [],
+      };
+    }
+
     const template =
       this.config.prompt_templates[templateId] ||
       this.config.prompt_templates["blog_post"];

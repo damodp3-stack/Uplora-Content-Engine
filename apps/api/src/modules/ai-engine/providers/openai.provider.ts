@@ -1,29 +1,45 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import axios from "axios";
+import {
+  IAIProvider,
+  ProviderHealth,
+  AIGenerationOutput,
+} from "./provider.interface";
 
 @Injectable()
-export class OpenAIProvider {
+export class OpenAIProvider implements IAIProvider {
+  readonly name = "openai";
   private readonly logger = new Logger(OpenAIProvider.name);
 
   constructor(private readonly config: ConfigService) {}
+
+  async getStatus(): Promise<ProviderHealth> {
+    const apiKey = this.getApiKey();
+    if (!apiKey) {
+      return {
+        provider: this.name,
+        status: "UNAVAILABLE",
+        message: "OPENAI_API_KEY is not configured",
+      };
+    }
+    return {
+      provider: this.name,
+      status: "AVAILABLE",
+    };
+  }
 
   async generate(
     systemPrompt: string,
     userPrompt: string,
     maxTokens: number = 2000,
-  ): Promise<{ content: string; model: string; tokens: number }> {
-    const apiKey = this.config.get<string>("ai.openaiApiKey");
+  ): Promise<AIGenerationOutput> {
+    const startTime = Date.now();
+    const apiKey = this.getApiKey();
 
     if (!apiKey) {
-      this.logger.warn(
-        "OpenAI API Key is missing. Returning template response.",
-      );
-      return {
-        content: `[OpenAI Sample Content]\n${userPrompt.substring(0, 300)}...`,
-        model: "gpt-4o-mini-mock",
-        tokens: 150,
-      };
+      this.logger.warn("OPENAI_API_KEY is missing. Generation aborted.");
+      throw new Error("OPENAI_API_KEY is missing");
     }
 
     try {
@@ -43,18 +59,36 @@ export class OpenAIProvider {
             Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json",
           },
+          timeout: 30000,
         },
       );
 
+      const latencyMs = Date.now() - startTime;
       const choice = response.data.choices[0];
+      const tokens = response.data.usage?.total_tokens || 200;
+
       return {
         content: choice.message.content.trim(),
         model: response.data.model || "gpt-4o-mini",
-        tokens: response.data.usage?.total_tokens || 200,
+        tokens,
+        provider: this.name,
+        latencyMs,
+        estimatedCostUSD: 0.002,
       };
-    } catch (error) {
-      this.logger.error(`OpenAI generation error: ${error.message}`);
-      throw error;
+    } catch (error: any) {
+      const errorMsg =
+        error.response?.data?.error?.message || error.message || "Unknown error";
+      this.logger.error(`OpenAI provider error: ${errorMsg}`);
+      throw new Error(`OpenAI provider error: ${errorMsg}`);
     }
+  }
+
+  private getApiKey(): string | null {
+    return (
+      this.config.get<string>("OPENAI_API_KEY") ||
+      this.config.get<string>("ai.openaiApiKey") ||
+      process.env.OPENAI_API_KEY ||
+      null
+    );
   }
 }

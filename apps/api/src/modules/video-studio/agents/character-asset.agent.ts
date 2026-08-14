@@ -1,62 +1,50 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { CreativeConceptDTO } from "./creative-director.agent";
-import { VisualBibleDTO } from "./visual-director.agent";
-
-export interface CharacterProfileDTO {
-  characterId: string;
-  name: string;
-  role: "host" | "customer" | "expert" | "narrator";
-  appearance: {
-    gender: string;
-    ageRange: string;
-    ethnicity: string;
-    clothing: string;
-    hairStyleColor: string;
-    facialFeatures: string;
-  };
-  voiceTraits: {
-    gender: string;
-    age: string;
-    accent: string;
-    tone: string;
-  };
-  referenceSeed: number;
-}
+import { AIEngineService } from "../../ai-engine/ai-engine.service";
+import {
+  CreativeConceptDTO,
+  VisualBibleDTO,
+  StoryboardDTO,
+  CharacterAssetPackageDTO,
+  CharacterAssetPackageSchema,
+} from "../schemas/phase2-deliverables.schema";
+import { executeLLMAgent } from "./agent-llm-helper";
+import { CHARACTER_ASSET_PROMPT } from "../prompts/character-asset.prompt";
 
 @Injectable()
 export class CharacterAssetAgent {
   private readonly logger = new Logger(CharacterAssetAgent.name);
 
+  constructor(private readonly aiEngine: AIEngineService) {}
+
   async generateProfiles(
     concept: CreativeConceptDTO,
     visualBible: VisualBibleDTO,
-  ): Promise<CharacterProfileDTO[]> {
+    storyboard: StoryboardDTO,
+  ): Promise<CharacterAssetPackageDTO> {
     this.logger.log(
-      `Generating character profiles for concept: ${concept.title}`,
+      `Analyzing dynamic character/asset requirements for concept: "${concept.title}"`,
     );
 
-    return [
-      {
-        characterId: "char-host-1",
-        name: "Alex Vance",
-        role: "expert",
-        appearance: {
-          gender: "male",
-          ageRange: "30-35",
-          ethnicity: "South Asian / Tamil Tech Lead",
-          clothing: "Modern navy blazer over sharp charcoal crewneck",
-          hairStyleColor: "Short neat black hair with well-groomed stubble",
-          facialFeatures:
-            "Confident demeanor, sharp jawline, articulate expression",
-        },
-        voiceTraits: {
-          gender: "male",
-          age: "32",
-          accent: "Indian English / Clear Tamil accent",
-          tone: "authoritative yet warm",
-        },
-        referenceSeed: 104258,
-      },
-    ];
+    const shotsSummary = storyboard.shots
+      .map((s) => `Shot ${s.shotNumber}: ${s.visualDescription}`)
+      .join("; ");
+
+    const userPrompt = CHARACTER_ASSET_PROMPT.buildUserPrompt({
+      title: concept.title,
+      artDirection: visualBible.artDirection,
+      shotsSummary,
+    });
+
+    const result = await executeLLMAgent<CharacterAssetPackageDTO>(
+      this.aiEngine,
+      CHARACTER_ASSET_PROMPT.systemInstructions,
+      userPrompt,
+      CharacterAssetPackageSchema,
+      this.logger,
+      CharacterAssetAgent.name,
+      CHARACTER_ASSET_PROMPT.version,
+    );
+
+    return result.data;
   }
 }

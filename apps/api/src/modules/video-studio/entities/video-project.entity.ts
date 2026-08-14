@@ -7,12 +7,16 @@ import {
   OneToMany,
 } from "typeorm";
 import { VideoShot } from "./video-shot.entity";
+import { VideoDeliverableVersion } from "./video-deliverable-version.entity";
 
 export enum VideoStage {
   IDEA_ANALYSIS = "idea_analysis",
+  RESEARCH = "research",
+  STRATEGY = "strategy",
   SCRIPTING = "scripting",
   STORYBOARDING = "storyboarding",
   VISUAL_DESIGN = "visual_design",
+  CHARACTER_DESIGN = "character_design",
   SHOT_GENERATION = "shot_generation",
   VOICE_SYNTHESIS = "voice_synthesis",
   AUDIO_MIXING = "audio_mixing",
@@ -24,7 +28,13 @@ export enum VideoStage {
 }
 
 export type StageStatus =
-  "pending" | "running" | "completed" | "failed" | "retrying" | "skipped";
+  | "pending"
+  | "running"
+  | "completed"
+  | "failed"
+  | "retrying"
+  | "skipped"
+  | "stale";
 
 @Entity("video_projects")
 export class VideoProject {
@@ -58,7 +68,11 @@ export class VideoProject {
   @Column({ default: "english" })
   subtitleLanguage: string;
 
-  @Column({ type: "enum", enum: VideoStage, default: VideoStage.IDEA_ANALYSIS })
+  @Column({
+    type: "enum",
+    enum: VideoStage,
+    default: VideoStage.IDEA_ANALYSIS,
+  })
   currentStage: VideoStage;
 
   @Column({ type: "int", default: 0 })
@@ -72,6 +86,9 @@ export class VideoProject {
 
   @Column({ type: "jsonb", nullable: true })
   concept: Record<string, any>;
+
+  @Column({ type: "jsonb", nullable: true })
+  research: Record<string, any>;
 
   @Column({ type: "jsonb", nullable: true })
   script: Record<string, any>;
@@ -108,6 +125,11 @@ export class VideoProject {
 
   @OneToMany(() => VideoShot, (shot) => shot.project, { cascade: true })
   shots: VideoShot[];
+
+  @OneToMany(() => VideoDeliverableVersion, (ver) => ver.project, {
+    cascade: true,
+  })
+  deliverableVersions: VideoDeliverableVersion[];
 
   @CreateDateColumn()
   createdAt: Date;

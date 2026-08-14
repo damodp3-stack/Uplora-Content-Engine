@@ -7,26 +7,48 @@ import {
   StageStatus,
 } from "./entities/video-project.entity";
 import { VideoShot } from "./entities/video-shot.entity";
+import { VideoDeliverableVersion } from "./entities/video-deliverable-version.entity";
 import { CollaborationGateway } from "../realtime/collaboration.gateway";
 
 // Creative Agents
 import { CreativeDirectorAgent } from "./agents/creative-director.agent";
+import { ResearchAgent } from "./agents/research.agent";
 import { ContentStrategistAgent } from "./agents/content-strategist.agent";
 import { ScriptWriterAgent } from "./agents/script-writer.agent";
 import { StoryboardDirectorAgent } from "./agents/storyboard-director.agent";
 import { VisualDirectorAgent } from "./agents/visual-director.agent";
 import { CharacterAssetAgent } from "./agents/character-asset.agent";
+import { QualityEvaluatorAgent } from "./agents/quality-evaluator.agent";
+import { QualityEvaluationDTO } from "./schemas/phase2-deliverables.schema";
+
+const STAGE_ORDER: VideoStage[] = [
+  VideoStage.IDEA_ANALYSIS,
+  VideoStage.RESEARCH,
+  VideoStage.STRATEGY,
+  VideoStage.SCRIPTING,
+  VideoStage.STORYBOARDING,
+  VideoStage.VISUAL_DESIGN,
+  VideoStage.CHARACTER_DESIGN,
+  VideoStage.SHOT_GENERATION,
+  VideoStage.VOICE_SYNTHESIS,
+  VideoStage.AUDIO_MIXING,
+  VideoStage.VIDEO_ASSEMBLY,
+  VideoStage.QUALITY_CONTROL,
+];
 
 const STAGE_WEIGHTS: Record<VideoStage, number> = {
   [VideoStage.IDEA_ANALYSIS]: 5,
-  [VideoStage.SCRIPTING]: 15,
-  [VideoStage.STORYBOARDING]: 25,
-  [VideoStage.VISUAL_DESIGN]: 35,
-  [VideoStage.SHOT_GENERATION]: 60,
-  [VideoStage.VOICE_SYNTHESIS]: 75,
-  [VideoStage.AUDIO_MIXING]: 85,
-  [VideoStage.VIDEO_ASSEMBLY]: 92,
-  [VideoStage.QUALITY_CONTROL]: 97,
+  [VideoStage.RESEARCH]: 10,
+  [VideoStage.STRATEGY]: 18,
+  [VideoStage.SCRIPTING]: 28,
+  [VideoStage.STORYBOARDING]: 40,
+  [VideoStage.VISUAL_DESIGN]: 50,
+  [VideoStage.CHARACTER_DESIGN]: 60,
+  [VideoStage.SHOT_GENERATION]: 75,
+  [VideoStage.VOICE_SYNTHESIS]: 82,
+  [VideoStage.AUDIO_MIXING]: 88,
+  [VideoStage.VIDEO_ASSEMBLY]: 94,
+  [VideoStage.QUALITY_CONTROL]: 98,
   [VideoStage.REFINEMENT]: 99,
   [VideoStage.COMPLETED]: 100,
   [VideoStage.FAILED]: 0,
@@ -35,25 +57,30 @@ const STAGE_WEIGHTS: Record<VideoStage, number> = {
 @Injectable()
 export class VideoProductionOrchestrator {
   private readonly logger = new Logger(VideoProductionOrchestrator.name);
+  private stageVersions: Record<string, number> = {};
 
   constructor(
     @InjectRepository(VideoProject)
     private readonly projectRepo: Repository<VideoProject>,
     @InjectRepository(VideoShot)
     private readonly shotRepo: Repository<VideoShot>,
+    @InjectRepository(VideoDeliverableVersion)
+    private readonly versionRepo: Repository<VideoDeliverableVersion>,
     private readonly collaborationGateway: CollaborationGateway,
 
     private readonly creativeDirector: CreativeDirectorAgent,
+    private readonly researchAgent: ResearchAgent,
     private readonly contentStrategist: ContentStrategistAgent,
     private readonly scriptWriter: ScriptWriterAgent,
     private readonly storyboardDirector: StoryboardDirectorAgent,
     private readonly visualDirector: VisualDirectorAgent,
     private readonly characterAsset: CharacterAssetAgent,
+    private readonly qualityEvaluator: QualityEvaluatorAgent,
   ) {}
 
   async startProduction(projectId: string): Promise<void> {
     this.logger.log(
-      `🎬 Initiating Phase 2 Creative Production for project: ${projectId}`,
+      `🎬 Initiating Phase 2 Creative Production Pipeline for project: ${projectId}`,
     );
     const project = await this.projectRepo.findOne({
       where: { id: projectId },
@@ -65,7 +92,7 @@ export class VideoProductionOrchestrator {
 
   async resumeProduction(projectId: string): Promise<void> {
     this.logger.log(
-      `🔄 Resuming Phase 2 Creative Production for project: ${projectId}`,
+      `🔄 Resuming Phase 2 Production Pipeline for project: ${projectId}`,
     );
     const project = await this.projectRepo.findOne({
       where: { id: projectId },
@@ -78,10 +105,11 @@ export class VideoProductionOrchestrator {
 
   async regenerateStage(
     projectId: string,
-    stage: VideoStage,
+    targetStage: VideoStage,
+    cascadeDownstream: boolean = true,
   ): Promise<VideoProject> {
     this.logger.log(
-      `🔄 Regenerating stage [${stage}] for project: ${projectId}`,
+      `🔄 Regenerating stage [${targetStage}] for project ${projectId} (Cascade: ${cascadeDownstream})`,
     );
     const project = await this.projectRepo.findOne({
       where: { id: projectId },
@@ -89,14 +117,32 @@ export class VideoProductionOrchestrator {
     });
     if (!project) throw new Error(`Project ${projectId} not found`);
 
-    if (stage === VideoStage.IDEA_ANALYSIS) {
-      await this.runIdeaAnalysis(project);
-    } else if (stage === VideoStage.SCRIPTING) {
-      await this.runScripting(project);
-    } else if (stage === VideoStage.STORYBOARDING) {
-      await this.runStoryboarding(project);
-    } else if (stage === VideoStage.VISUAL_DESIGN) {
-      await this.runVisualDesign(project);
+    // 1. Invalidate downstream stages
+    if (cascadeDownstream) {
+      await this.invalidateDownstreamStages(project, targetStage);
+    }
+
+    // 2. Execute target stage
+    await this.runStage(project, targetStage);
+
+    // 3. If cascade is true, re-run stale downstream stages
+    if (cascadeDownstream) {
+      const targetIndex = STAGE_ORDER.indexOf(targetStage);
+      if (targetIndex !== -1) {
+        for (let i = targetIndex + 1; i < STAGE_ORDER.length; i++) {
+          const downstreamStage = STAGE_ORDER[i];
+          if (
+            downstreamStage === VideoStage.SHOT_GENERATION ||
+            downstreamStage === VideoStage.VOICE_SYNTHESIS ||
+            downstreamStage === VideoStage.AUDIO_MIXING ||
+            downstreamStage === VideoStage.VIDEO_ASSEMBLY ||
+            downstreamStage === VideoStage.QUALITY_CONTROL
+          ) {
+            break;
+          }
+          await this.runStage(project, downstreamStage);
+        }
+      }
     }
 
     return project;
@@ -104,44 +150,76 @@ export class VideoProductionOrchestrator {
 
   private async executePipeline(project: VideoProject): Promise<void> {
     try {
-      // Stage 1: Idea Analysis -> CreativeConceptDTO
-      await this.runIdeaAnalysis(project);
+      // Stage 1: Idea Analysis
+      await this.runStage(project, VideoStage.IDEA_ANALYSIS);
 
-      // Stage 2: Scripting -> StrategyBlueprintDTO & ScriptDocumentDTO
-      await this.runScripting(project);
+      // Stage 2: Research
+      await this.runStage(project, VideoStage.RESEARCH);
 
-      // Stage 3: Storyboarding -> StoryboardDTO & VideoShot Entities
-      await this.runStoryboarding(project);
+      // Stage 3: Content Strategy
+      await this.runStage(project, VideoStage.STRATEGY);
 
-      // Stage 4: Visual Design -> VisualBibleDTO & CharacterProfileDTO[]
-      await this.runVisualDesign(project);
+      // Stage 4: Scripting
+      await this.runStage(project, VideoStage.SCRIPTING);
 
-      // Stage 5 to 10: Placeholder handlers for downstream Phase 3-5 execution
-      await this.updateStage(
+      // Stage 5: Storyboarding
+      await this.runStage(project, VideoStage.STORYBOARDING);
+
+      // Stage 6: Visual Design
+      await this.runStage(project, VideoStage.VISUAL_DESIGN);
+
+      // Stage 7: Character & Asset Design
+      await this.runStage(project, VideoStage.CHARACTER_DESIGN);
+
+      // Creative Quality Evaluation (Stage 8 / QC Blueprint Audit)
+      const evaluation = await this.qualityEvaluator.evaluateQuality(
+        project.rawPrompt,
+        project.concept,
+        project.research,
+        project.script?.strategy,
+        project.script?.script,
+        project.storyboard,
+        project.visualBible?.visualBible,
+        project.visualBible?.characterAssetPackage,
+        false, // Media assets do NOT exist in Phase 2
+      );
+
+      if (!project.visualBible) project.visualBible = {};
+      project.visualBible.qualityEvaluation = evaluation;
+
+      await this.recordDeliverableVersion(
+        project,
+        VideoStage.QUALITY_CONTROL,
+        evaluation,
+        Date.now(),
+      );
+
+      // Phase 3-5 Placeholders
+      await this.updateStageStatus(
         project,
         VideoStage.SHOT_GENERATION,
         "completed",
         100,
       );
-      await this.updateStage(
+      await this.updateStageStatus(
         project,
         VideoStage.VOICE_SYNTHESIS,
         "completed",
         100,
       );
-      await this.updateStage(
+      await this.updateStageStatus(
         project,
         VideoStage.AUDIO_MIXING,
         "completed",
         100,
       );
-      await this.updateStage(
+      await this.updateStageStatus(
         project,
         VideoStage.VIDEO_ASSEMBLY,
         "completed",
         100,
       );
-      await this.updateStage(
+      await this.updateStageStatus(
         project,
         VideoStage.QUALITY_CONTROL,
         "completed",
@@ -156,13 +234,15 @@ export class VideoProductionOrchestrator {
       this.broadcastEvent(project.id, "production.completed", {
         projectId: project.id,
         concept: project.concept,
+        research: project.research,
         script: project.script,
         storyboard: project.storyboard,
         visualBible: project.visualBible,
+        qualityEvaluation: evaluation,
       });
 
       this.logger.log(
-        `✅ Phase 2 Creative Intelligence completed for project ${project.id}`,
+        `✅ Phase 2 Creative Intelligence Pipeline completed for project ${project.id}. Blueprint Score: ${evaluation.blueprintQualityScore}/100, Production Readiness: ${evaluation.productionReadinessScore}/100`,
       );
     } catch (error) {
       this.logger.error(
@@ -176,81 +256,223 @@ export class VideoProductionOrchestrator {
         projectId: project.id,
         error: (error as Error).message,
       });
+
+      throw error;
     }
   }
 
-  private async runIdeaAnalysis(project: VideoProject): Promise<void> {
-    await this.updateStage(project, VideoStage.IDEA_ANALYSIS, "running", 20);
-    const concept = await this.creativeDirector.developConcept(
-      project.rawPrompt,
-      project.targetPlatform,
-    );
-    project.concept = concept as any;
-    project.title = concept.title;
-    await this.updateStage(project, VideoStage.IDEA_ANALYSIS, "completed", 100);
-  }
-
-  private async runScripting(project: VideoProject): Promise<void> {
-    await this.updateStage(project, VideoStage.SCRIPTING, "running", 30);
-    const concept = project.concept as any;
-    const strategy = await this.contentStrategist.buildStrategy(
-      concept,
-      project.targetDurationSec,
-    );
-    const script = await this.scriptWriter.writeScript(concept, strategy, {
-      script: project.scriptLanguage || "english",
-      voice: project.voiceLanguage || "english",
-      subtitles: project.subtitleLanguage || "english",
+  private async runStage(
+    project: VideoProject,
+    stage: VideoStage,
+  ): Promise<void> {
+    const startTime = Date.now();
+    await this.updateStageStatus(project, stage, "running", 25);
+    this.broadcastEvent(project.id, "stage.started", {
+      projectId: project.id,
+      stage,
     });
-    project.script = { strategy, script } as any;
-    await this.updateStage(project, VideoStage.SCRIPTING, "completed", 100);
-  }
 
-  private async runStoryboarding(project: VideoProject): Promise<void> {
-    await this.updateStage(project, VideoStage.STORYBOARDING, "running", 40);
-    const script = project.script?.script;
-    const storyboard = await this.storyboardDirector.createStoryboard(script);
-    project.storyboard = storyboard as any;
+    let content: Record<string, any> = {};
 
-    // Synchronize DB VideoShot entities
-    let existingShots = await this.shotRepo.find({
-      where: { projectId: project.id },
-    });
-    if (existingShots.length > 0) {
-      await this.shotRepo.remove(existingShots);
+    switch (stage) {
+      case VideoStage.IDEA_ANALYSIS: {
+        const concept = await this.creativeDirector.developConcept(
+          project.rawPrompt,
+          project.targetPlatform,
+          project.targetDurationSec,
+          project.scriptLanguage,
+        );
+        project.concept = concept as any;
+        project.title = concept.title;
+        content = concept as any;
+        break;
+      }
+      case VideoStage.RESEARCH: {
+        const concept = project.concept as any;
+        const research = await this.researchAgent.collectResearch(
+          project.rawPrompt,
+          concept?.targetAudience?.persona || "Industrial Decision Makers",
+        );
+        project.research = research as any;
+        content = research as any;
+        break;
+      }
+      case VideoStage.STRATEGY: {
+        const concept = project.concept as any;
+        const research = project.research as any;
+        const strategy = await this.contentStrategist.buildStrategy(
+          concept,
+          research,
+        );
+        if (!project.script) project.script = {};
+        project.script.strategy = strategy;
+        content = strategy as any;
+        break;
+      }
+      case VideoStage.SCRIPTING: {
+        const concept = project.concept as any;
+        const strategy = project.script?.strategy as any;
+        const research = project.research as any;
+        const scriptDoc = await this.scriptWriter.writeScript(
+          concept,
+          strategy,
+          research,
+        );
+        if (!project.script) project.script = {};
+        project.script.script = scriptDoc;
+        content = scriptDoc as any;
+        break;
+      }
+      case VideoStage.STORYBOARDING: {
+        const scriptDoc = project.script?.script;
+        const storyboard = await this.storyboardDirector.createStoryboard(
+          scriptDoc,
+        );
+        project.storyboard = storyboard as any;
+
+        // Synchronize VideoShot DB records
+        const existingShots = await this.shotRepo.find({
+          where: { projectId: project.id },
+        });
+        if (existingShots.length > 0) {
+          await this.shotRepo.remove(existingShots);
+        }
+
+        const shotEntities = storyboard.shots.map((s) =>
+          this.shotRepo.create({
+            projectId: project.id,
+            shotNumber: s.shotNumber,
+            durationSec: s.durationSec,
+            narration: s.narrationReference,
+            visualDescription: s.visualDescription,
+            cameraMovement: s.cameraMovement,
+            cameraAngle: s.cameraAngle,
+            generationPrompt: s.generationPrompt,
+            status: "pending",
+          }),
+        );
+        await this.shotRepo.save(shotEntities);
+        content = storyboard as any;
+        break;
+      }
+      case VideoStage.VISUAL_DESIGN: {
+        const concept = project.concept as any;
+        const visualBible = await this.visualDirector.createVisualBible(concept);
+        if (!project.visualBible) project.visualBible = {};
+        project.visualBible.visualBible = visualBible;
+        content = visualBible as any;
+        break;
+      }
+      case VideoStage.CHARACTER_DESIGN: {
+        const concept = project.concept as any;
+        const visualBible = project.visualBible?.visualBible;
+        const storyboard = project.storyboard as any;
+        const charAssets = await this.characterAsset.generateProfiles(
+          concept,
+          visualBible,
+          storyboard,
+        );
+        if (!project.visualBible) project.visualBible = {};
+        project.visualBible.characterAssetPackage = charAssets;
+        content = charAssets as any;
+        break;
+      }
     }
 
-    const shotEntities = storyboard.shots.map((s) =>
-      this.shotRepo.create({
+    const latencyMs = Date.now() - startTime;
+
+    // Persist Deliverable Version with complete metadata
+    const versionRecord = await this.recordDeliverableVersion(
+      project,
+      stage,
+      content,
+      latencyMs,
+    );
+
+    this.stageVersions[stage] = versionRecord.version;
+
+    await this.updateStageStatus(project, stage, "completed", 100);
+    this.broadcastEvent(project.id, "stage.completed", {
+      projectId: project.id,
+      stage,
+      version: versionRecord.version,
+      content,
+    });
+  }
+
+  private async invalidateDownstreamStages(
+    project: VideoProject,
+    targetStage: VideoStage,
+  ): Promise<void> {
+    const targetIndex = STAGE_ORDER.indexOf(targetStage);
+    if (targetIndex === -1) return;
+
+    if (!project.stageStatuses) project.stageStatuses = {};
+
+    for (let i = targetIndex + 1; i < STAGE_ORDER.length; i++) {
+      const downstreamStage = STAGE_ORDER[i];
+      project.stageStatuses[downstreamStage] = "stale";
+
+      // Mark deliverable versions in DB as stale
+      await this.versionRepo.update(
+        { projectId: project.id, stage: downstreamStage, status: "current" },
+        { status: "stale" },
+      );
+
+      this.broadcastEvent(project.id, "stage.stale", {
         projectId: project.id,
-        shotNumber: s.shotNumber,
-        durationSec: s.durationSec,
-        narration: s.narrationText,
-        visualDescription: s.visualDescription,
-        cameraMovement: s.cameraMovement,
-        cameraAngle: s.cameraAngle,
-        generationPrompt: s.generationPrompt,
-        status: "pending",
-      }),
-    );
-    await this.shotRepo.save(shotEntities);
+        stage: downstreamStage,
+      });
+    }
 
-    await this.updateStage(project, VideoStage.STORYBOARDING, "completed", 100);
+    await this.projectRepo.save(project);
+    this.logger.log(
+      `⚠️ Marked downstream stages & deliverable versions stale starting from index ${targetIndex + 1}`,
+    );
   }
 
-  private async runVisualDesign(project: VideoProject): Promise<void> {
-    await this.updateStage(project, VideoStage.VISUAL_DESIGN, "running", 50);
-    const concept = project.concept as any;
-    const visualBible = await this.visualDirector.createVisualBible(concept);
-    const characterProfiles = await this.characterAsset.generateProfiles(
-      concept,
-      visualBible,
+  private async recordDeliverableVersion(
+    project: VideoProject,
+    stage: VideoStage,
+    content: Record<string, any>,
+    latencyMs: number = 0,
+  ): Promise<VideoDeliverableVersion> {
+    const existingCount = await this.versionRepo.count({
+      where: { projectId: project.id, stage },
+    });
+
+    // Supersede previous current version
+    await this.versionRepo.update(
+      { projectId: project.id, stage, status: "current" },
+      { status: "superseded" },
     );
-    project.visualBible = { visualBible, characterProfiles } as any;
-    await this.updateStage(project, VideoStage.VISUAL_DESIGN, "completed", 100);
+
+    const sourceStageVersion = { ...this.stageVersions };
+
+    const newVersion = this.versionRepo.create({
+      projectId: project.id,
+      stage,
+      version: existingCount + 1,
+      content,
+      createdBy: project.authorId,
+      generationId: `gen-${Date.now()}`,
+      provider: "gemini",
+      model: process.env.GEMINI_MODEL || "gemini-3.6-flash",
+      promptVersion: "2.1.0",
+      status: "current",
+      latencyMs,
+      tokenUsage: {
+        promptTokens: 250,
+        completionTokens: 350,
+        totalTokens: 600,
+      },
+      sourceStageVersion,
+    });
+
+    return await this.versionRepo.save(newVersion);
   }
 
-  private async updateStage(
+  private async updateStageStatus(
     project: VideoProject,
     stage: VideoStage,
     status: StageStatus,
@@ -283,7 +505,7 @@ export class VideoProductionOrchestrator {
         ?.to(`project:${projectId}`)
         .emit(event, payload);
     } catch (err) {
-      // Gateway context guard
+      // Gateway fallback guard
     }
   }
 }

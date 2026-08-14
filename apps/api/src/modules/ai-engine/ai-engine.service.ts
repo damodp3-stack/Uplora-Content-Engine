@@ -1,9 +1,15 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, ServiceUnavailableException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { GeminiProvider } from "./providers/gemini.provider";
 import { OpenAIProvider } from "./providers/openai.provider";
 import { OllamaProvider } from "./providers/ollama.provider";
 import { HuggingFaceProvider } from "./providers/huggingface.provider";
 import { PromptEngineService } from "./prompt-engine.service";
+import {
+  IAIProvider,
+  ProviderHealth,
+  AIGenerationOutput,
+} from "./providers/provider.interface";
 
 export interface AIGenerationRequest {
   prompt: string;
@@ -14,7 +20,7 @@ export interface AIGenerationRequest {
   targetAudience?: string;
   keywords?: string[];
   platform?: string;
-  provider?: "openai" | "ollama" | "huggingface";
+  provider?: "gemini" | "openai" | "ollama" | "huggingface";
   maxTokens?: number;
   templateVariables?: Record<string, string>;
 }
@@ -28,6 +34,7 @@ export interface AIGenerationResponse {
     generationTime: number;
     cost: number;
     promptVersion: string;
+    isMock: boolean;
   };
   suggestions: {
     titles: string[];
@@ -40,14 +47,37 @@ export interface AIGenerationResponse {
 @Injectable()
 export class AIEngineService {
   private readonly logger = new Logger(AIEngineService.name);
+  private readonly providerRegistry: Map<string, IAIProvider> = new Map();
 
   constructor(
     private readonly config: ConfigService,
     private readonly promptEngine: PromptEngineService,
+    private readonly geminiProvider: GeminiProvider,
     private readonly openaiProvider: OpenAIProvider,
     private readonly ollamaProvider: OllamaProvider,
     private readonly huggingfaceProvider: HuggingFaceProvider,
-  ) {}
+  ) {
+    this.providerRegistry.set("gemini", this.geminiProvider);
+    this.providerRegistry.set("openai", this.openaiProvider);
+    this.providerRegistry.set("ollama", this.ollamaProvider);
+  }
+
+  async getProviderStatuses(): Promise<ProviderHealth[]> {
+    const statuses: ProviderHealth[] = [];
+    for (const [_, provider] of this.providerRegistry) {
+      try {
+        const health = await provider.getStatus();
+        statuses.push(health);
+      } catch (err) {
+        statuses.push({
+          provider: provider.name,
+          status: "ERROR",
+          message: (err as Error).message,
+        });
+      }
+    }
+    return statuses;
+  }
 
   async generateContent(
     request: AIGenerationRequest,
@@ -65,43 +95,56 @@ export class AIEngineService {
       ...(request.templateVariables || {}),
     });
 
-    let result: { content: string; model: string; tokens: number };
-    const provider = request.provider || this.selectBestProvider();
+    const preferredProviderName =
+      request.provider ||
+      this.config.get<string>("AI_DEFAULT_PROVIDER") ||
+      this.config.get<string>("ai.defaultProvider") ||
+      "gemini";
 
-    try {
-      switch (provider) {
-        case "ollama":
-          result = await this.ollamaProvider.generate(
-            built.systemPrompt,
-            built.userPrompt,
-            request.maxTokens,
-          );
-          break;
-        case "huggingface":
-          result = await this.huggingfaceProvider.generate(
-            built.systemPrompt,
-            built.userPrompt,
-            request.maxTokens,
-          );
-          break;
-        case "openai":
-        default:
-          result = await this.openaiProvider.generate(
-            built.systemPrompt,
-            built.userPrompt,
-            request.maxTokens,
-          );
-          break;
+    // Determine execution order (preferred provider first, followed by remaining registered providers)
+    const providerOrder = this.getProviderExecutionOrder(preferredProviderName);
+
+    let result: AIGenerationOutput | null = null;
+    let lastError: Error | null = null;
+
+    for (const providerName of providerOrder) {
+      const provider = this.providerRegistry.get(providerName);
+      if (!provider) continue;
+
+      const health = await provider.getStatus();
+      if (health.status !== "AVAILABLE") {
+        this.logger.log(
+          `Skipping provider [${providerName}] (Status: ${health.status}${health.message ? ` - ${health.message}` : ""})`,
+        );
+        continue;
       }
-    } catch (error) {
-      this.logger.warn(
-        `Provider ${provider} failed, trying fallback: ${error.message}`,
+
+      try {
+        this.logger.log(`Attempting generation via provider [${providerName}]...`);
+        result = await provider.generate(
+          built.systemPrompt,
+          built.userPrompt,
+          request.maxTokens,
+        );
+        break; // Generation succeeded
+      } catch (err) {
+        lastError = err as Error;
+        this.logger.warn(
+          `Provider [${providerName}] failed: ${lastError.message}. Trying next available provider...`,
+        );
+      }
+    }
+
+    if (!result) {
+      const statuses = await this.getProviderStatuses();
+      const statusSummary = statuses
+        .map((s) => `${s.provider}: ${s.status}`)
+        .join(", ");
+      this.logger.error(
+        `All AI providers failed or are UNAVAILABLE. (${statusSummary})`,
       );
-      result = await this.fallbackGeneration(
-        built.systemPrompt,
-        built.userPrompt,
-        provider,
-        request.maxTokens,
+      throw new ServiceUnavailableException(
+        `No AI provider is available to process request. Configure GEMINI_API_KEY or OPENAI_API_KEY. Provider Statuses: [${statusSummary}]`,
       );
     }
 
@@ -110,12 +153,13 @@ export class AIEngineService {
     return {
       content: result.content,
       metadata: {
-        provider,
+        provider: result.provider,
         model: result.model,
         tokensUsed: result.tokens,
         generationTime: Date.now() - startTime,
-        cost: provider === "ollama" || provider === "huggingface" ? 0 : 0.002,
+        cost: result.estimatedCostUSD,
         promptVersion: this.promptEngine.getVersion(),
+        isMock: false,
       },
       suggestions,
     };
@@ -175,34 +219,16 @@ export class AIEngineService {
     return results;
   }
 
-  private selectBestProvider(): "openai" | "ollama" | "huggingface" {
-    if (this.config.get("ai.openaiApiKey")) return "openai";
-    return "ollama";
-  }
-
-  private async fallbackGeneration(
-    systemPrompt: string,
-    userPrompt: string,
-    failedProvider: string,
-    maxTokens?: number,
-  ) {
-    if (failedProvider !== "ollama") {
-      try {
-        return await this.ollamaProvider.generate(
-          systemPrompt,
-          userPrompt,
-          maxTokens,
-        );
-      } catch (err) {
-        // Fall through
-      }
+  private getProviderExecutionOrder(preferred: string): string[] {
+    const allProviders = ["gemini", "openai", "ollama"];
+    const normalizedPref = preferred.toLowerCase();
+    if (allProviders.includes(normalizedPref)) {
+      return [
+        normalizedPref,
+        ...allProviders.filter((p) => p !== normalizedPref),
+      ];
     }
-
-    return {
-      content: `### High Impact Content Blueprint\n\n- **Hook**: Captivate your readers with immediate value.\n- **Core Value**: ${userPrompt}\n- **Call To Action**: Connect with us to explore more!`,
-      model: "fallback-template",
-      tokens: 100,
-    };
+    return allProviders;
   }
 
   private async generateSuggestions(
