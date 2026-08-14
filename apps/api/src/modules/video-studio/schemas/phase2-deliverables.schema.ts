@@ -58,6 +58,10 @@ export const ResearchItemSchema = z.object({
   source: z.string().min(1),
   confidence: z.enum(["high", "medium", "low"]).default("high"),
   claimType: ClaimClassificationSchema.default("CREATIVE_CLAIM"),
+  sourceUrl: z.string().optional(),
+  sourceTitle: z.string().optional(),
+  sourceDate: z.string().optional(),
+  extractedEvidence: z.string().optional(),
 });
 
 export const ResearchSchema = z.object({

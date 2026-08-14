@@ -9,10 +9,12 @@ import { VideoProductionProcessor } from "./video-production.processor";
 import { VideoStudioController } from "./video-studio.controller";
 import { RealtimeModule } from "../realtime/realtime.module";
 import { AIEngineModule } from "../ai-engine/ai-engine.module";
+import { MediaModule } from "../media/media.module";
 
-// Creative Agents
+// Creative Agents & Providers
 import { CreativeDirectorAgent } from "./agents/creative-director.agent";
 import { ResearchAgent } from "./agents/research.agent";
+import { TavilyResearchProvider } from "./providers/tavily-research.provider";
 import { ContentStrategistAgent } from "./agents/content-strategist.agent";
 import { ScriptWriterAgent } from "./agents/script-writer.agent";
 import { StoryboardDirectorAgent } from "./agents/storyboard-director.agent";
@@ -32,6 +34,7 @@ import { QualityEvaluatorAgent } from "./agents/quality-evaluator.agent";
     }),
     RealtimeModule,
     AIEngineModule,
+    MediaModule,
   ],
   controllers: [VideoStudioController],
   providers: [
@@ -39,6 +42,7 @@ import { QualityEvaluatorAgent } from "./agents/quality-evaluator.agent";
     VideoProductionProcessor,
     CreativeDirectorAgent,
     ResearchAgent,
+    TavilyResearchProvider,
     ContentStrategistAgent,
     ScriptWriterAgent,
     StoryboardDirectorAgent,
@@ -50,6 +54,7 @@ import { QualityEvaluatorAgent } from "./agents/quality-evaluator.agent";
     VideoProductionOrchestrator,
     CreativeDirectorAgent,
     ResearchAgent,
+    TavilyResearchProvider,
     ContentStrategistAgent,
     ScriptWriterAgent,
     StoryboardDirectorAgent,

@@ -16,6 +16,7 @@ import {
 } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { MediaService } from "./media.service";
+import { AssetType } from "./entities/media-asset.entity";
 
 @ApiTags("Media")
 @ApiBearerAuth()
@@ -37,9 +38,19 @@ export class MediaController {
   @ApiConsumes("multipart/form-data")
   @ApiOperation({ summary: "Upload an image or video asset" })
   async uploadFile(@UploadedFile() file: any, @Req() req: any) {
-    return this.mediaService.uploadMedia(
-      file,
-      req.user?.activeWorkspaceId || "default-workspace",
+    const workspaceId = req.user?.activeWorkspaceId || "default-workspace";
+    const filename = file?.originalname || `asset_${Date.now()}.png`;
+    const mimeType = file?.mimetype || "image/png";
+    const buffer = file?.buffer || Buffer.from("uploaded-file");
+    const assetType = mimeType.startsWith("video") ? AssetType.VIDEO : AssetType.IMAGE;
+
+    return this.mediaService.uploadAndSaveAsset(
+      workspaceId,
+      "default-project",
+      assetType,
+      filename,
+      buffer,
+      mimeType,
     );
   }
 }
