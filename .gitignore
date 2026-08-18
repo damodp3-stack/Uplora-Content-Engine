@@ -35,3 +35,10 @@ Thumbs.db
 
 # Turbo cache
 .turbo
+
+# Local scratch and uploads
+scratch/
+uploads/
+apps/api/scratch/
+apps/api/bin/
+

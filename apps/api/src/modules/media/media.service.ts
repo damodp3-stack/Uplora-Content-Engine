@@ -92,9 +92,25 @@ export class MediaService {
     return asset;
   }
 
+  async findOne(id: string, workspaceId: string): Promise<MediaAsset> {
+    return await this.getAssetById(id, workspaceId);
+  }
+
+  async getAssetBuffer(id: string, workspaceId: string): Promise<Buffer> {
+    const asset = await this.getAssetById(id, workspaceId);
+    return await this.storageProvider.download(asset.storageKey);
+  }
+
   async getAssetsByProject(projectId: string, workspaceId: string): Promise<MediaAsset[]> {
     return await this.assetRepo.find({
       where: { projectId, workspaceId },
+      order: { createdAt: "DESC" },
+    });
+  }
+
+  async findByProjectAndShot(projectId: string, shotId: string, workspaceId: string): Promise<MediaAsset[]> {
+    return await this.assetRepo.find({
+      where: { projectId, shotId, workspaceId },
       order: { createdAt: "DESC" },
     });
   }
@@ -104,6 +120,12 @@ export class MediaService {
       where: { workspaceId },
       order: { createdAt: "DESC" },
     });
+  }
+
+  async updateStatus(id: string, workspaceId: string, status: AssetStatus): Promise<MediaAsset> {
+    const asset = await this.getAssetById(id, workspaceId);
+    asset.status = status;
+    return await this.assetRepo.save(asset);
   }
 
   async generateSignedUrl(

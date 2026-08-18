@@ -20,6 +20,11 @@ import { TemplatesModule } from "./modules/templates/templates.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { RealtimeModule } from "./modules/realtime/realtime.module";
 import { VideoStudioModule } from "./modules/video-studio/video-studio.module";
+import { ImageGenerationModule } from "./modules/image-generation/image-generation.module";
+import { VideoGenerationModule } from "./modules/video-generation/video-generation.module";
+import { VoiceGenerationModule } from "./modules/voice-generation/voice-generation.module";
+import { AudioStudioModule } from "./modules/audio-studio/audio-studio.module";
+import { PipelineQcModule } from "./modules/pipeline-qc/pipeline-qc.module";
 
 // Config
 import databaseConfig from "./config/database.config";
@@ -88,6 +93,13 @@ import storageConfig from "./config/storage.config";
     NotificationsModule,
     RealtimeModule,
     VideoStudioModule,
+    ImageGenerationModule,
+    VideoGenerationModule,
+    VoiceGenerationModule,
+    AudioStudioModule,
+    PipelineQcModule,
   ],
 })
+
 export class AppModule {}
+
