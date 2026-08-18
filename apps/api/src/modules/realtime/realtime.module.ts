@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { CollaborationGateway } from "./collaboration.gateway";
+import { PipelineProgressGateway } from "./pipeline-progress.gateway";
 import { Content } from "../content/entities/content.entity";
 
 @Module({
@@ -11,7 +12,7 @@ import { Content } from "../content/entities/content.entity";
     }),
     TypeOrmModule.forFeature([Content]),
   ],
-  providers: [CollaborationGateway],
-  exports: [CollaborationGateway],
+  providers: [CollaborationGateway, PipelineProgressGateway],
+  exports: [CollaborationGateway, PipelineProgressGateway],
 })
 export class RealtimeModule {}

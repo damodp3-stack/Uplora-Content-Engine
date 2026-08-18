@@ -1,10 +1,11 @@
-import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   PipelineQcResult,
   PipelineJobContext,
   SelfHealingStage,
   DiagnosticReport,
+  CriticalQcGate,
 } from '../interfaces/pipeline-qc.interface';
 import { PipelineQcService } from './pipeline-qc.service';
 import { VoiceGenerationService } from '../../voice-generation/services/voice-generation.service';
@@ -51,17 +52,20 @@ export class SelfHealingOrchestratorService {
   public determineEarliestFailedStage(qcResult: PipelineQcResult): SelfHealingStage {
     const failedGates = qcResult.criticalReport.failedCriticalGates || [];
 
-    if (failedGates.includes('AUDIO_CLIPPING')) {
-      return 'AUDIO_MASTERING';
+    if (failedGates.includes('FILE_NOT_FOUND') || failedGates.includes('CHECKSUM_MISMATCH')) {
+      return 'MEDIA_STORAGE';
     }
-    if (failedGates.includes('AV_SYNC')) {
-      return 'AUDIO_MASTERING';
+    if (failedGates.includes('MISSING_VIDEO_STREAM') || failedGates.includes('CORRUPT_MEDIA')) {
+      return 'VIDEO_MOTION';
     }
     if (failedGates.includes('MISSING_AUDIO_STREAM')) {
       return 'TTS_NARRATION';
     }
-    if (failedGates.includes('MISSING_VIDEO_STREAM') || failedGates.includes('CORRUPT_MEDIA')) {
-      return 'VIDEO_MOTION';
+    if (failedGates.includes('AUDIO_CLIPPING')) {
+      return 'AUDIO_MASTERING';
+    }
+    if (failedGates.includes('AV_SYNC')) {
+      return 'AV_SYNC';
     }
     if (qcResult.scoreBreakdown.scriptTimingScore < 10) {
       return 'SCRIPT_TIMING';
@@ -77,7 +81,7 @@ export class SelfHealingOrchestratorService {
     initialQcResult: PipelineQcResult,
   ): Promise<{ finalQcResult: PipelineQcResult; finalVideoPath: string; diagnosticReport?: DiagnosticReport }> {
     this.logger.log(
-      `Initiating Autonomous Self-Healing Recovery [Job=${jobContext.jobId}, InitialScore=${initialQcResult.overallScore}, InitialPassed=${initialQcResult.passed}]`,
+      `Initiating Targeted Self-Healing Recovery [Job=${jobContext.jobId}, InitialScore=${initialQcResult.overallScore}, InitialPassed=${initialQcResult.passed}]`,
     );
 
     let currentQcResult = initialQcResult;
@@ -106,8 +110,8 @@ export class SelfHealingOrchestratorService {
       const tempId = `${Date.now()}_heal_${attempt}`;
 
       try {
-        if (failedStage === 'AUDIO_MASTERING' || failedStage === 'SCRIPT_TIMING') {
-          // Targeted Healing: Adjust speaking rate & re-master audio payload
+        if (failedStage === 'AUDIO_MASTERING' || failedStage === 'SCRIPT_TIMING' || failedStage === 'AV_SYNC') {
+          // Targeted Stage Recovery: Remaster audio / adjust TTS speaking rate / re-mux
           const speakingRate = failedStage === 'SCRIPT_TIMING' ? 1.1 : 1.0;
 
           const voiceResult = await this.voiceService.generateVoice({
@@ -159,6 +163,7 @@ export class SelfHealingOrchestratorService {
         currentQcResult = await this.qcService.evaluatePipeline(
           currentVideoPath,
           jobContext.targetDurationSeconds,
+          { scriptText: narrationText },
         );
 
         this.eventEmitter.emit('pipeline.self_healing.completed', {
@@ -169,7 +174,7 @@ export class SelfHealingOrchestratorService {
         });
 
         if (currentQcResult.passed) {
-          this.logger.log(`✅ Self-Healing Succeeded on Attempt ${attempt}! New Score: ${currentQcResult.overallScore}/100`);
+          this.logger.log(`✅ Targeted Self-Healing Succeeded on Attempt ${attempt}! New Score: ${currentQcResult.overallScore}/100`);
           return { finalQcResult: currentQcResult, finalVideoPath: currentVideoPath };
         }
       } catch (healErr: any) {
@@ -177,21 +182,25 @@ export class SelfHealingOrchestratorService {
       }
     }
 
-    // Final Failure Diagnostic Report Generation
+    // Final Failure Diagnostic Report Generation (Structured JSON)
     const primaryFailedGate = currentQcResult.criticalReport.failedCriticalGates[0] || 'QUALITY_SCORE_BELOW_THRESHOLD';
+    const failedStage = this.determineEarliestFailedStage(currentQcResult);
+
     const diagnosticReport: DiagnosticReport = {
       jobId: jobContext.jobId,
       failedCriterion: primaryFailedGate,
+      stage: failedStage,
       measuredValue: currentQcResult.criticalReport.avSyncDeltaMs,
       expectedValue: 50,
       recoveryAttempts: attempt,
       stageFailures,
+      criticalFailures: currentQcResult.criticalReport.failedCriticalGates || [],
       timestamp: new Date().toISOString(),
       finalStatus: 'FAILED',
     };
 
     this.logger.error(
-      `❌ Self-Healing Exhausted after ${attempt} attempts. Diagnostic Report generated for job [${jobContext.jobId}]`,
+      `❌ Targeted Self-Healing Exhausted after ${attempt} attempts. Diagnostic Report generated for job [${jobContext.jobId}]`,
     );
 
     this.eventEmitter.emit('pipeline.self_healing.failed', {

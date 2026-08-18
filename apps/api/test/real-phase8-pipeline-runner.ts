@@ -177,14 +177,17 @@ async function runRealPhase8EndToEndVerification() {
     // STEP 4: Phase 8 Dual-Gate Quality Control Inspection (English)
     // ----------------------------------------------------
     console.log('\n🔍 STEP 4: Running Phase 8 Dual-Gate Quality Inspection (English)...');
-    let enQcResult = await pipelineQc.evaluatePipeline(finalEnMp4Path, enVoiceResult.output.durationSeconds);
+    let enQcResult = await pipelineQc.evaluatePipeline(finalEnMp4Path, enVoiceResult.output.durationSeconds, { scriptText: enText });
 
     console.log(`   • Overall Quality Score: ${enQcResult.overallScore} / 100`);
     console.log(`   • Critical Gates Passed: ${enQcResult.criticalGatesPassed}`);
     console.log(`   • A/V Sync Delta: ${enQcResult.criticalReport.avSyncDeltaMs} ms (Limit: <= 50ms)`);
-    console.log(`   • Video Resolution: ${enQcResult.criticalReport.videoWidth}x${enQcResult.criticalReport.videoHeight} (9:16)`);
-    console.log(`   • Audio Codec: ${enQcResult.criticalReport.audioCodec}`);
-    console.log(`   • Digital Audio Clipping: ${enQcResult.criticalReport.hasAudioClipping}`);
+    console.log(`   • Video Resolution: ${enQcResult.criticalReport.videoQcReport.width}x${enQcResult.criticalReport.videoQcReport.height} (9:16)`);
+    console.log(`   • Audio Codec: ${enQcResult.criticalReport.audioQcReport.codec}`);
+    console.log(`   • Digital Audio Clipping: ${enQcResult.criticalReport.audioQcReport.hasAudioClipping}`);
+    console.log(`   • Measured Integrated LUFS: ${enQcResult.criticalReport.audioQcReport.ebuLufsReport.integratedLufs}`);
+    console.log(`   • Measured True Peak: ${enQcResult.criticalReport.audioQcReport.ebuLufsReport.truePeakDb} dBFS`);
+    console.log(`   • WPM Rate: ${enQcResult.criticalReport.wpmReport.actualWpm} WPM`);
     console.log(`   • Production Ready: ${enQcResult.isProductionReady}`);
 
     if (!enQcResult.passed) {
@@ -262,7 +265,7 @@ async function runRealPhase8EndToEndVerification() {
     console.log(`   ✅ Real Tamil 9:16 Final Mastered Reel Generated: ${finalTaMp4Path} (${finalTaStat.size} bytes)`);
 
     console.log('\n🔍 STEP 6: Running Phase 8 Dual-Gate Quality Inspection (Tamil)...');
-    let taQcResult = await pipelineQc.evaluatePipeline(finalTaMp4Path, taVoiceResult.output.durationSeconds);
+    let taQcResult = await pipelineQc.evaluatePipeline(finalTaMp4Path, taVoiceResult.output.durationSeconds, { scriptText: taText });
     console.log(`   • Tamil Quality Score: ${taQcResult.overallScore} / 100`);
     console.log(`   • Tamil Critical Gates Passed: ${taQcResult.criticalGatesPassed}`);
     console.log(`   • Tamil Production Ready: ${taQcResult.isProductionReady}`);
@@ -275,7 +278,7 @@ async function runRealPhase8EndToEndVerification() {
     // STEP 7: Run Storage Hygiene Cleanup
     // ----------------------------------------------------
     console.log('\n🧹 STEP 7: Executing Storage Hygiene Cleanup...');
-    const hygieneResult = storageHygiene.cleanupTransientScratchFiles('dummy_old_job');
+    const hygieneResult = storageHygiene.cleanupTransientScratchFiles({ jobId: 'dummy_old_job' });
     console.log(`   ✅ Storage Hygiene Completed: ${hygieneResult.filesRemoved} files purged`);
 
     console.log('\n========================================================================');
